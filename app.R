@@ -2,17 +2,14 @@
 outdir <- getSrcDirectory(function(dummy) {dummy})
 setwd(outdir)
 
-rsconnect::deployApp('/Users/jamesdiao/Box Sync/Gerstein/ERCC-Plotting-Tool/')
+#rsconnect::deployApp('/Users/jamesdiao/Box Sync/Gerstein/ERCC-Plotting-Tool/')
 
 # Install and load all required packages
-library(shiny)
-library(dplyr)
-library(ggplot2)
-#pkg_list <- c("ggplot2","dplyr","shiny")
-#installed <- pkg_list %in% installed.packages()[,"Package"]
-#if (!all(installed))
-#  install.packages(pkg_list[!installed])
-#sapply(pkg_list, require, character.only = T)
+pkg_list <- c("ggplot2","dplyr","shiny")
+installed <- pkg_list %in% installed.packages()[,"Package"]
+if (!all(installed))
+  install.packages(pkg_list[!installed])
+sapply(pkg_list, require, character.only = T)
 
 ### LOAD FILES
 all_reads_pca <- readRDS("Dependencies/all_log_PCA_reduced.rds")

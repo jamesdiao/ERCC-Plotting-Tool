@@ -121,8 +121,8 @@ $(document).ready(function () {
 
 <div id="plotting-tool-for-1075-samples-from-the-exrna-atlas" class="section level1">
 <h1>Plotting Tool for 1075 Samples from the exRNA Atlas</h1>
-<div id="james-diao-10-january-2017" class="section level4">
-<h4>James Diao, 10 January 2017</h4>
+<div id="james-diao-12-january-2017" class="section level4">
+<h4>James Diao, 12 January 2017</h4>
 <p>Here are some brief notes on the usage of this visualization tool. <br /></p>
 <hr />
 </div>
@@ -134,16 +134,19 @@ The application is capped at 25 active user-hours per month. It is identical to 
 </div>
 <div id="clone-repo" class="section level3">
 <h3>CLONE REPO</h3>
-<p>Clone this source repository, containing our Markdown scripts and data: <br /> - <code>$ git clone https://github.com/jamesdiao/ERCC-Plotting-Tool.git</code></p>
+<p>Clone this source repository, containing our scripts and data: <br /> - <code>$ git clone https://github.com/jamesdiao/ERCC-Plotting-Tool.git</code></p>
 <hr />
 </div>
 <div id="starting-the-app" class="section level3">
 <h3>STARTING THE APP</h3>
-<p><br /></p>
 <div id="if-you-have-rstudio" class="section level4">
 <h4>If you have RStudio:</h4>
 <ul>
-<li>Open <code>app.R</code> using RStudio, and click “Run App” on the top right of the main window. The app should open and run immediately. <br /></li>
+<li>Open <code>app.R</code> using RStudio.</li>
+<li>If you haven’t already, install the R package “shiny” (must be connected to the Internet).<br />
+<code>&gt; install.packages(&quot;shiny&quot;)</code><br />
+</li>
+<li>Click “Run App” on the top right of the main window. The app should open and run immediately. <br /></li>
 </ul>
 </div>
 <div id="if-you-do-not-have-rstudio" class="section level4">
@@ -151,7 +154,7 @@ The application is capped at 25 active user-hours per month. It is identical to 
 <ul>
 <li>Open an R console.<br />
 </li>
-<li>If you haven’t already, install the R package “shiny” using the following command (must be connected to the Internet).<br />
+<li>If you haven’t already, install the R package “shiny” (must be connected to the Internet).<br />
 <code>&gt; install.packages(&quot;shiny&quot;)</code><br />
 </li>
 <li>Run the following command (with the correct directory substituted for ~):<br />
@@ -165,7 +168,6 @@ The application is capped at 25 active user-hours per month. It is identical to 
 </div>
 <div id="app-details" class="section level3">
 <h3>APP DETAILS</h3>
-<p><br /></p>
 <div id="control-panel" class="section level4">
 <h4>Control Panel</h4>
 <ul>
@@ -175,8 +177,7 @@ The application is capped at 25 active user-hours per month. It is identical to 
 </li>
 <li><strong>RNA Category</strong>: choose from miRNA, piRNA, tRNA, and snRNA.<br />
 </li>
-<li><strong>Color By</strong>: choose from Dataset, Condition, Anatomical_Location, Biofluid_Name, exRNA_Source, Cell_Culture_Source, RNA_Isolation_Kit, ERCC_QC_Meets_Standards. All labels are drawn from the exRNA atlas gridview at <a href="http://exrna-atlas.org/" class="uri">http://exrna-atlas.org/</a><br />
-<br /></li>
+<li><strong>Color By</strong>: choose from Dataset, Condition, Anatomical_Location, Biofluid_Name, exRNA_Source, Cell_Culture_Source, RNA_Isolation_Kit, ERCC_QC_Meets_Standards. All labels are drawn from the exRNA atlas gridview at <a href="http://exrna-atlas.org/" class="uri">http://exrna-atlas.org/</a></li>
 </ul>
 </div>
 <div id="filtering" class="section level4">
@@ -184,14 +185,13 @@ The application is capped at 25 active user-hours per month. It is identical to 
 <ul>
 <li><strong>Datsets</strong>: uncheck boxes to exclude all data in that dataset.<br />
 </li>
-<li><strong>Biofluids</strong>: uncheck boxes to exclude all data of that biofluid.<br />
-<br /></li>
+<li><strong>Biofluids</strong>: uncheck boxes to exclude all data of that biofluid.</li>
 </ul>
 </div>
 <div id="generate-plots" class="section level4">
 <h4>Generate Plots</h4>
 <ul>
-<li><strong>Make New Plot</strong>: plots all data points in the specified embedding and color labels. All biofluids are labeled by shape.<br />
+<li><strong>Make New Plot</strong>: plots data points with the specified embedding, filtering, and labels. All biofluids are labeled by shape.<br />
 </li>
 <li><strong>Download Plot</strong>: downloads a pdf of the shown plot, dimensions 13x10.</li>
 </ul>
@@ -205,9 +205,9 @@ The application is capped at 25 active user-hours per month. It is identical to 
 <li><code>Dependencies/</code> contains additional data required by <code>app.R</code></li>
 </ol>
 <ul>
-<li><code>all_log_PCA_reduced.rds</code> contains a list of the top 100 PCA axes for miRNA, piRNA, tRNA, and snRNA. PCA was performed using the prcomp command from the stats package. The data (in reads-per-million) was log-transformed after a small constant was added (to remove 0s). Before PCA, the data was centered but not rescaled.</li>
-<li><code>all_log_tSNE_reduced.rds</code> contains the 2-dimensional tSNE embeddings for miRNA, piRNA, tRNA, and snRNA. The embedding was computed on log-transformed RPM data after a small constant was added (to remove 0s).</li>
-<li><code>Data_Summary_1567.tsv</code> contains the metadata collected from the exRNA atlas gridview. Rows is mapped to samples and used to assign labels.</li>
+<li><code>all_log_PCA_reduced.rds</code> contains a list of the top 100 PCA axes for miRNA, piRNA, tRNA, and snRNA. PCA was performed using the prcomp command from the stats R package. The data (in reads-per-million) was log-transformed after a small constant was added (to remove 0s). Before PCA, the data was centered but not rescaled.</li>
+<li><code>all_log_tSNE_reduced.rds</code> contains the 2-dimensional tSNE embeddings for miRNA, piRNA, tRNA, and snRNA. tSNE was performed using the tsne R package with default settings. The embedding was computed on log-transformed RPM data after a small constant was added (to remove 0s).</li>
+<li><code>Data_Summary_1567.tsv</code> contains the metadata collected from the exRNA atlas gridview. Rows are mapped to samples and used to assign labels.</li>
 <li><code>map.rds</code> contains the mapping from samples to sample names in <code>Data_Summary_1567.tsv</code>.</li>
 <li><code>sample_map.rds</code> contains dataset identity of each sample.</li>
 </ul>

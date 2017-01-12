@@ -23,15 +23,18 @@ Clone this source repository, containing our scripts and data: <br />
 ### STARTING THE APP
 
 #### If you have RStudio:  
-- Open `app.R` using RStudio, and click "Run App" on the top right of the main window. The app should open and run immediately. <br />
+ - Open `app.R` using RStudio. 
+ - If you haven't already, install the R package "shiny" (must be connected to the Internet).  
+`> install.packages("shiny")`  
+ - Click "Run App" on the top right of the main window. The app should open and run immediately. <br />
 
 #### If you do not have RStudio:  
-- Open an R console.  
-- If you haven't already, install the R package "shiny" using the following command (must be connected to the Internet).  
+ - Open an R console.  
+ - If you haven't already, install the R package "shiny" (must be connected to the Internet).  
 `> install.packages("shiny")`  
-- Run the following command (with the correct directory substituted for ~):  
+ - Run the following command (with the correct directory substituted for ~):  
 `> shiny::runApp("~/ERCC-Plotting-Tool")`  
-- If you directly open `app.R` in R, you should already be at the correct directory. In that case, you only need to run:  
+ - If you directly open `app.R` in R, you should already be at the correct directory. In that case, you only need to run:  
 `> shiny::runApp()`
 
 
@@ -50,7 +53,7 @@ Clone this source repository, containing our scripts and data: <br />
 - **Biofluids**: uncheck boxes to exclude all data of that biofluid.  
 
 #### Generate Plots  
-- **Make New Plot**: plots all data points in the specified embedding and color labels. All biofluids are labeled by shape.  
+- **Make New Plot**: plots data points with the specified embedding, filtering, and labels.  All biofluids are labeled by shape.  
 - **Download Plot**: downloads a pdf of the shown plot, dimensions 13x10. 
 
 -------------------------------------------------------------
