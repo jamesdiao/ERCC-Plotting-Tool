@@ -86,14 +86,11 @@ data_opts <- unique(sample_map) %>% setNames(unique(sample_map)) %>% as.list
 biofluid_opts <- levels(data_summary$Biofluid_Name)
 biofluid_opts <- biofluid_opts %>% setNames(biofluid_opts) %>% as.list
 
-# Define UI for application that draws a histogram
 ui <- shinyUI(fluidPage(
    
-   # Application title
    titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-   h4("James Diao, 10 January 2017"),
+   h4("James Diao, 12 January 2017"),
    h5("https://jamesdiao.shinyapps.io/ercc-plotting-tool"),
-   # Sidebar with a slider input for number of bins 
    fluidRow(
       column(4,
         h3("Control Panel"),
@@ -136,8 +133,6 @@ ui <- shinyUI(fluidPage(
 ))
 
 
-
-# Define server logic required to draw a histogram
 server <- shinyServer(function(input, output, session) {
   observeEvent(input$run, {
     keep_data <- sample_map %in% input$checkdata
