@@ -1,0 +1,5 @@
+	InputReads	GenomeReads	TranscriptomeReads	TranscriptomeGenomeRatio	TranscriptomeComplexity
+sample_GBM1_exosome_clean_fq	15397700	5805327	5294110	0.91194	0.0533608
+sample_GBM2_exosome_clean_fq	13497116	6046376	5418049	0.896082	0.0411349
+sample_GBM3_exosome_clean_fq	13730911	3814679	3297178	0.86434	0.0936583
+sample_GBM4_exosome_clean_fq	12746216	4124775	3560649	0.863235	0.0867718

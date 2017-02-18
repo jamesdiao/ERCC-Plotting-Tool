@@ -1,0 +1,10 @@
+	InputReads	GenomeReads	TranscriptomeReads	TranscriptomeGenomeRatio	TranscriptomeComplexity
+sample_SM11_norm1_sequence_fastq	27002901	501064	230891	0.460801	0.0881282
+sample_SM12_norm2_sequence_fastq	27957185	397549	142222	0.357747	0.112873
+sample_SM13_norm3_sequence_fastq	28214261	405499	155011	0.382272	0.116482
+sample_SM1_crc1_sequence_fastq	22729858	89821	29923	0.33314	0.203355
+sample_SM2_crc2_sequence_fastq	21132674	191500	80212	0.418862	0.155787
+sample_SM3_crc3_sequence_fastq	23547368	233701	88709	0.379583	0.15614
+sample_SM6_uc1_sequence_fastq	20626993	182707	52249	0.285972	0.246646
+sample_SM7_uc2_sequence_fastq	18186259	188246	50522	0.268383	0.222101
+sample_SM8_uc3_sequence_fastq	28426819	385454	199026	0.516342	0.0899531
