@@ -32,8 +32,9 @@ sapply(pkg_list, require, character.only = T)
 ```
 
 ```{r import_tsv} 
-### This code chunk creates Data_Summary_1567.tsv from the ExRNA Atlas gridview
-### tsv was downloaded from http://exrna-atlas.org/exat/gridview using tabletools2.
+### This code chunk is performed in the actual app, but we also need to do it here 
+### to generate the other dependencies. 
+### Data_Summary_1567.tsv was downloaded from http://exrna-atlas.org/exat/gridview using tabletools2.
 import_tsv <- function(data_file) {
   file.by.line <- suppressWarnings(readLines(data_file) %>% strsplit("\t"))
   data_summary <- do.call(rbind, file.by.line) %>% as.data.frame(stringsAsFactors = F)

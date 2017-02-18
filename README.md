@@ -1,6 +1,6 @@
 # Plotting Tool for 1075 Samples from the exRNA Atlas
 
-#### James Diao, 12 January 2017
+#### James Diao, 17 February 2017
 
 Here are some brief notes on the usage of this visualization tool. <br />
 
@@ -66,6 +66,7 @@ Clone this source repository, containing our scripts and data: <br />
   - `Data_Summary_1567.tsv` contains the metadata collected from the exRNA atlas gridview. Rows are mapped to samples and used to assign labels. 
   - `map.rds` contains the mapping from samples to sample names in `Data_Summary_1567.tsv`. 
   - `sample_map.rds` contains dataset identity of each sample.
+2. `Make_Dependency_Files/` contains a `Make_Dependencies.Rmd`, which can be knitted to automatically generate all .rds dependencies. This folder also contains the original datasets from the ExRNA Atlas in `miRNA/`, `piRNA/`, `tRNA/`, `smallRNAQuants/`, and `QC_Results/`. 
 
 -----------------------------------------------------------------
 
