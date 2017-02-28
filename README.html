@@ -121,8 +121,8 @@ $(document).ready(function () {
 
 <div id="plotting-tool-for-1075-samples-from-the-exrna-atlas" class="section level1">
 <h1>Plotting Tool for 1075 Samples from the exRNA Atlas</h1>
-<div id="james-diao-17-february-2017" class="section level4">
-<h4>James Diao, 17 February 2017</h4>
+<div id="james-diao-28-february-2017" class="section level4">
+<h4>James Diao, 28 February 2017</h4>
 <p>Here are some brief notes on the usage of this visualization tool. <br /></p>
 <hr />
 </div>
@@ -183,6 +183,7 @@ The application is capped at 25 active user-hours per month. It is identical to 
 <div id="filtering" class="section level4">
 <h4>Filtering</h4>
 <ul>
+<li><strong>Recompute Values</strong>: click after modifying the below checkboxes to recompute PCA/tSNE coordinate spaces on data subset.</li>
 <li><strong>Datsets</strong>: uncheck boxes to exclude all data in that dataset.<br />
 </li>
 <li><strong>Biofluids</strong>: uncheck boxes to exclude all data of that biofluid.</li>
@@ -205,6 +206,7 @@ The application is capped at 25 active user-hours per month. It is identical to 
 <li><code>Dependencies/</code> contains additional data required by <code>app.R</code></li>
 </ol>
 <ul>
+<li><code>all_log_rna_reads.rds</code> contains a list of the log-transformed data frames (sample x RNA) for miRNA, piRNA, tRNA, and snRNA reads.</li>
 <li><code>all_log_PCA_reduced.rds</code> contains a list of the top 100 PCA axes for miRNA, piRNA, tRNA, and snRNA. PCA was performed using the prcomp command from the stats R package. The data (in reads-per-million) was log-transformed after a small constant was added (to remove 0s). Before PCA, the data was centered but not rescaled.</li>
 <li><code>all_log_tSNE_reduced.rds</code> contains the 2-dimensional tSNE embeddings for miRNA, piRNA, tRNA, and snRNA. tSNE was performed using the tsne R package with default settings. The embedding was computed on log-transformed RPM data after a small constant was added (to remove 0s).</li>
 <li><code>Data_Summary_1567.tsv</code> contains the metadata collected from the exRNA atlas gridview. Rows are mapped to samples and used to assign labels.</li>

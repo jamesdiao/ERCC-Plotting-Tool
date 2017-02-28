@@ -1,6 +1,6 @@
 # Plotting Tool for 1075 Samples from the exRNA Atlas
 
-#### James Diao, 17 February 2017
+#### James Diao, 28 February 2017
 
 Here are some brief notes on the usage of this visualization tool. <br />
 
@@ -49,6 +49,7 @@ Clone this source repository, containing our scripts and data: <br />
 - **Color By**: choose from Dataset, Condition, Anatomical\_Location, Biofluid\_Name, exRNA\_Source, Cell\_Culture\_Source, RNA\_Isolation\_Kit, ERCC\_QC\_Meets\_Standards. All labels are drawn from the exRNA atlas gridview at http://exrna-atlas.org/  
 
 #### Filtering  
+- **Recompute Values**: click after modifying the below checkboxes to recompute PCA/tSNE coordinate spaces on data subset. 
 - **Datsets**: uncheck boxes to exclude all data in that dataset.  
 - **Biofluids**: uncheck boxes to exclude all data of that biofluid.  
 
@@ -61,6 +62,7 @@ Clone this source repository, containing our scripts and data: <br />
 ### DESCRIPTION OF FILES/FOLDERS
 1. `app.R` contains all of the code for running the ERCC Plotting Tool. 
 2. `Dependencies/` contains additional data required by `app.R`
+ - `all_log_rna_reads.rds` contains a list of the log-transformed data frames (sample x RNA) for miRNA, piRNA, tRNA, and snRNA reads. 
  - `all_log_PCA_reduced.rds` contains a list of the top 100 PCA axes for miRNA, piRNA, tRNA, and snRNA. PCA was performed using the prcomp command from the stats R package. The data (in reads-per-million) was log-transformed after a small constant was added (to remove 0s). Before PCA, the data was centered but not rescaled. 
  - `all_log_tSNE_reduced.rds` contains the 2-dimensional tSNE embeddings for miRNA, piRNA, tRNA, and snRNA. tSNE was performed using the tsne R package with default settings. The embedding was computed on log-transformed RPM data after a small constant was added (to remove 0s). 
   - `Data_Summary_1567.tsv` contains the metadata collected from the exRNA atlas gridview. Rows are mapped to samples and used to assign labels. 

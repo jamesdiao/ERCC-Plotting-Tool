@@ -2,16 +2,24 @@
 outdir <- getSrcDirectory(function(dummy) {dummy})
 setwd(outdir)
 
-#rsconnect::deployApp('/Users/jamesdiao/Box Sync/Gerstein/ERCC-Plotting-Tool/')
+#rsconnect::deployApp('/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool/')
+#setwd("/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool")
 
 # Install and load all required packages
-pkg_list <- c("ggplot2","dplyr","shiny")
-installed <- pkg_list %in% installed.packages()[,"Package"]
-if (!all(installed))
-  install.packages(pkg_list[!installed])
-sapply(pkg_list, require, character.only = T)
+#pkg_list <- c("ggplot2","dplyr","shiny", "shinysky","tsne")
+#installed <- pkg_list %in% installed.packages()[,"Package"]
+#if (!all(installed))
+#  install.packages(pkg_list[!installed])
+#sapply(pkg_list, require, character.only = T)
+
+require(ggplot2)
+require(dplyr)
+require(shiny)
+require(shinysky)
+require(tsne)
 
 ### LOAD FILES
+log_rna_reads <- readRDS("Dependencies/all_log_rna_reads.rds")
 all_reads_pca <- readRDS("Dependencies/all_log_PCA_reduced.rds")
 all_reads_tsne <- readRDS("Dependencies/all_log_tSNE_reduced.rds")
 sample_map <- readRDS("Dependencies/sample_map.rds")
@@ -49,14 +57,15 @@ import_tsv <- function(data_file) {
 data_summary <- import_tsv("Dependencies/Data_Summary_1567.tsv") %>% arrange(Biosample_Metadata_Accession)
 #850, 1369, 1567
 
-plottable <- "Dataset" %>% 
-  c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)])
+biofluid <- data_summary[map,]$Biofluid_Name
+plottable <- gsub("_"," ","Dataset" %>% 
+  c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
 
 
 ### PRINCIPAL COMPONENTS ANALYSIS
-pca_plot <- function(axis_x, axis_y, biofluid, color_by, keep, pca_object, smRNA, colorby) {
+pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object, smRNA, colorby) {
   data.frame(PCA_1 = pca_object[,axis_x], PCA_2 = pca_object[,axis_y], 
-             Shape = biofluid, Color = color_by)[keep,] %>% 
+             Shape = biofluid[keep], Color = color_elements[keep]) %>% 
     ggplot(aes(x = PCA_1, y = PCA_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
     ggtitle(sprintf("PCA Plot of %s Colored By %s", smRNA, colorby)) + 
@@ -69,8 +78,8 @@ pca_plot <- function(axis_x, axis_y, biofluid, color_by, keep, pca_object, smRNA
     )
 }
 ### t-DISTRIBUTED STOCHASTIC NEIGHBOR EMBEDDING
-tsne_plot <- function(biofluid, color_by, keep, tsne_object, smRNA, colorby) {
-  temp <- data.frame(tsne_object, Shape = biofluid, Color = color_by)[keep,] %>%
+tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorby) {
+  temp <- data.frame(tsne_object, Shape = biofluid[keep], Color = color_elements[keep]) %>%
     ggplot(aes(x = tSNE_1, y = tSNE_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
     ggtitle(sprintf("tSNE Plot of %s Colored By %s", smRNA, colorby)) + 
@@ -89,17 +98,19 @@ biofluid_opts <- biofluid_opts %>% setNames(biofluid_opts) %>% as.list
 ui <- shinyUI(fluidPage(
    
    titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-   h4("James Diao, 12 January 2017"),
+   h4("James Diao, 28 February 2017"),
    h5("https://jamesdiao.shinyapps.io/ercc-plotting-tool"),
    fluidRow(
       column(4,
         h3("Control Panel"),
           wellPanel(
             radioButtons(inputId = "plotstyle", label = "Plotting Style", 
-                         choices = c("tSNE", "PCA"), selected = "tSNE"),
-          
-            sliderInput(inputId = "pcs", label = "Principal Components (PCA Only)",
+                         choices = c("tSNE", "PCA"), selected = "PCA"),
+            conditionalPanel(
+              condition = "input.plotstyle == 'PCA'",
+              sliderInput(inputId = "pcs", label = "Principal Components (PCA Only)",
                         min = 1, max = 5, value = c(1,2), dragRange = T, ticks = F)
+            )
           ),
           wellPanel(
             radioButtons(inputId = "smRNA", label = "RNA Category", 
@@ -108,6 +119,9 @@ ui <- shinyUI(fluidPage(
                          choices = plottable)
           ),
           h3("Filtering"),
+          actionButton(inputId = 'recompute', label = 'Recompute Values'),
+          busyIndicator("In Progress: Please Wait", wait = 500),
+          h4(),
           wellPanel(
             checkboxGroupInput("checkdata", label = "Datasets", 
                                choices = data_opts,
@@ -134,32 +148,58 @@ ui <- shinyUI(fluidPage(
 
 
 server <- shinyServer(function(input, output, session) {
-  observeEvent(input$run, {
+  
+  coord <- reactiveValues()
+  coord$pca <- all_reads_pca
+  coord$tsne <- all_reads_tsne
+  coord$keep <- rep(TRUE,length(sample_map))
+  
+  observeEvent(input$recompute, {
+    
     keep_data <- sample_map %in% input$checkdata
-    biofluid <- data_summary[map,]$Biofluid_Name
     keep_biofluid <- biofluid %in% input$checkfluid
-    keep <- keep_data & keep_biofluid
+    coord$keep <- keep_data & keep_biofluid
+    
+    coord$pca <- lapply(log_rna_reads, function(reads) {
+      rna_pca <- prcomp(reads[coord$keep,], center = T, scale. = F)
+      reduced_cols <- seq(1,min(100,ncol(rna_pca$x)))
+      return(rna_pca$x[,reduced_cols])
+    })
+    
+    coord$tsne <- lapply(log_rna_reads, function(reads) {
+      log_tsne_out <- tsne(reads[coord$keep,], k=2, initial_dims = 30, perplexity = 30, 
+                           max_iter = 500, epoch = 50)
+      return(data.frame("tSNE_1" = log_tsne_out[,1], "tSNE_2" = log_tsne_out[,2]))
+    })
+    
+    
+  })
+  
+  observeEvent(input$run, {
+    #keep_data <- sample_map %in% input$checkdata
+    #keep_biofluid <- biofluid %in% input$checkfluid
+    #keep <- keep_data & keep_biofluid
     if (input$plotstyle == "PCA") {
-      reads_pca <- all_reads_pca[[input$smRNA]]
+      reads_pca <- coord$pca[[input$smRNA]]
       pcs <- input$pcs
       if (pcs[1] == pcs[2])
         pcs[2] <- pcs[1] + 1
       if (input$colorby == "Dataset"){
         plot_out <- pca_plot(pcs[1], pcs[2], biofluid, sample_map,
-                             keep, reads_pca, input$smRNA, input$colorby)
+                             coord$keep, reads_pca, input$smRNA, input$colorby)
       } else {
         plot_out <- pca_plot(pcs[1], pcs[2], biofluid, data_summary[,input$colorby][map], 
-                             keep, reads_pca, input$smRNA, input$colorby)
+                             coord$keep, reads_pca, input$smRNA, input$colorby)
       }
 
     } else {
-      reads_tsne <- all_reads_tsne[[input$smRNA]]
+      reads_tsne <- coord$tsne[[input$smRNA]]
       if (input$colorby == "Dataset"){
         plot_out <- tsne_plot(biofluid, sample_map, 
-                              keep, reads_tsne, input$smRNA, input$colorby) 
+                              coord$keep, reads_tsne, input$smRNA, input$colorby) 
       } else {
         plot_out <- tsne_plot(biofluid, data_summary[,input$colorby][map], 
-                              keep, reads_tsne, input$smRNA, input$colorby)
+                              coord$keep, reads_tsne, input$smRNA, input$colorby)
       }
     }
     

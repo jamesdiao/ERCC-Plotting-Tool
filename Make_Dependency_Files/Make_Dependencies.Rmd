@@ -18,7 +18,7 @@ geometry: margin=1in
 ```{r setup, include = F}
 # change echo = T for code-folding in HTML document
 ### Used for troubleshooting
-setwd("/Users/jamesdiao/Documents/Gerstein/CBB_Project_2016")
+setwd("/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool/Make_Dependency_Files")
 knitr::opts_chunk$set(echo = T, eval = T, cache = F, warning = F, message = F)
 ```
 
@@ -121,6 +121,7 @@ small_num <- function(reads) {
 rna_reads <- lapply(c("miRNA","piRNA","tRNA","smallRNAQuants"), collect_rna) %>% 
   setNames(c("miRNA","piRNA","tRNA","snRNA"))
 log_rna_reads <- lapply(rna_reads, function(rna) log10(rna+small_num(rna)))
+saveRDS(log_rna_reads, file = "Dependencies/all_log_rna_reads.rds")
 ```
 
 ```{r sample_map} 
