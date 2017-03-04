@@ -18,12 +18,14 @@ require(shiny)
 require(shinysky)
 require(tsne)
 
+path <- "Dependencies"
+
 ### LOAD FILES
-log_rna_reads <- readRDS("Dependencies/all_log_rna_reads.rds")
-all_reads_pca <- readRDS("Dependencies/all_log_PCA_reduced.rds")
-all_reads_tsne <- readRDS("Dependencies/all_log_tSNE_reduced.rds")
-sample_map <- readRDS("Dependencies/sample_map.rds")
-map <- readRDS("Dependencies/map.rds")
+log_rna_reads <- readRDS(sprintf("%s/all_log_rna_reads.rds", path))
+all_reads_pca <- readRDS(sprintf("%s/all_log_PCA_reduced.rds", path))
+all_reads_tsne <- readRDS(sprintf("%s/all_log_tSNE_reduced.rds", path))
+sample_map <- readRDS(sprintf("%s/sample_map.rds", path))
+map <- readRDS(sprintf("%s/map.rds", path))
 
 ### IMPORT TSV
 import_tsv <- function(data_file) {
@@ -31,35 +33,35 @@ import_tsv <- function(data_file) {
   data_summary <- do.call(rbind, file.by.line) %>% as.data.frame(stringsAsFactors = F)
   if (ncol(data_summary) == 19) {
     colnames(data_summary) <- c("Blank","Biosample_Name","Condition",
-      "Anatomical_Location","Biofluid_Name","exRNA_Source","Cell_Culture_Source",
-      "Profiling_Assay","RNA_Isolation_Kit","ERCC_QC_Meets_Standards",
-      "ERCC_QC_Reference_Genome_Reads","ERCC_QC_Transcriptome_Genome_Ratio",
-      "ERCC_QC_Transcriptome_Reads","Download_Data","Download_Advanced_Results",
-      "Download_Metadata","RNA_Profile","External_References","Biosample_Metadata_Accession")
+                                "Anatomical_Location","Biofluid_Name","exRNA_Source","Cell_Culture_Source",
+                                "Profiling_Assay","RNA_Isolation_Kit","ERCC_QC_Meets_Standards",
+                                "ERCC_QC_Reference_Genome_Reads","ERCC_QC_Transcriptome_Genome_Ratio",
+                                "ERCC_QC_Transcriptome_Reads","Download_Data","Download_Advanced_Results",
+                                "Download_Metadata","RNA_Profile","External_References","Biosample_Metadata_Accession")
   } else {
     colnames(data_summary) <- c("Blank","Biosample_Name","Condition","Anatomical_Location",
-      "Biofluid_Name","exRNA_Source","Cell_Culture_Source",
-      "Profiling_Assay","RNA_Isolation_Kit","ERCC_QC_Meets_Standards",
-      "ERCC_QC_Reference_Genome_Reads","ERCC_QC_Transcriptome_Genome_Ratio",
-      "ERCC_QC_Transcriptome_Reads","Download_Data","Download_Metadata",
-      "External_References","Biosample_Metadata_Accession")
+                                "Biofluid_Name","exRNA_Source","Cell_Culture_Source",
+                                "Profiling_Assay","RNA_Isolation_Kit","ERCC_QC_Meets_Standards",
+                                "ERCC_QC_Reference_Genome_Reads","ERCC_QC_Transcriptome_Genome_Ratio",
+                                "ERCC_QC_Transcriptome_Reads","Download_Data","Download_Metadata",
+                                "External_References","Biosample_Metadata_Accession")
   }
   data_summary <- data_summary[,apply(data_summary, 2, function(col) any(nzchar(col)))]
   data_summary <- suppressWarnings(data_summary %>% 
-      mutate(ERCC_QC_Reference_Genome_Reads = gsub(",","",ERCC_QC_Reference_Genome_Reads) %>% as.integer) %>%
-      mutate(ERCC_QC_Transcriptome_Reads = gsub(",","",ERCC_QC_Transcriptome_Reads) %>% as.integer) %>%
-      mutate(ERCC_QC_Transcriptome_Genome_Ratio = ERCC_QC_Transcriptome_Genome_Ratio %>% as.numeric) %>% 
-      mutate(Biofluid_Name = sub("Cerebrospinal fluid","CSF", 
-             sub("Culture Media, Conditioned","Cultured_Media", Biofluid_Name))))
+                                     mutate(ERCC_QC_Reference_Genome_Reads = gsub(",","",ERCC_QC_Reference_Genome_Reads) %>% as.integer) %>%
+                                     mutate(ERCC_QC_Transcriptome_Reads = gsub(",","",ERCC_QC_Transcriptome_Reads) %>% as.integer) %>%
+                                     mutate(ERCC_QC_Transcriptome_Genome_Ratio = ERCC_QC_Transcriptome_Genome_Ratio %>% as.numeric) %>% 
+                                     mutate(Biofluid_Name = sub("Cerebrospinal fluid","CSF", 
+                                                                sub("Culture Media, Conditioned","Cultured_Media", Biofluid_Name))))
   biofluid_names <- table(data_summary$Biofluid_Name) %>% sort(decreasing = T) %>% names
   data_summary <- mutate(data_summary, Biofluid_Name = factor(Biofluid_Name, levels = biofluid_names))
 }
-data_summary <- import_tsv("Dependencies/Data_Summary_1567.tsv") %>% arrange(Biosample_Metadata_Accession)
+data_summary <- import_tsv(sprintf("%s/Data_Summary_1567.tsv", path)) %>% arrange(Biosample_Metadata_Accession)
 #850, 1369, 1567
 
 biofluid <- data_summary[map,]$Biofluid_Name
 plottable <- gsub("_"," ","Dataset" %>% 
-  c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
+                    c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
 
 
 ### PRINCIPAL COMPONENTS ANALYSIS
@@ -96,54 +98,54 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 biofluid_opts <- biofluid_opts %>% setNames(biofluid_opts) %>% as.list
 
 ui <- shinyUI(fluidPage(
-   
-   titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-   h4("James Diao, 28 February 2017"),
-   h5("https://jamesdiao.shinyapps.io/ercc-plotting-tool"),
-   fluidRow(
-      column(4,
-        h3("Control Panel"),
-          wellPanel(
-            radioButtons(inputId = "plotstyle", label = "Plotting Style", 
-                         choices = c("tSNE", "PCA"), selected = "PCA"),
-            conditionalPanel(
-              condition = "input.plotstyle == 'PCA'",
-              sliderInput(inputId = "pcs", label = "Principal Components (PCA Only)",
-                        min = 1, max = 5, value = c(1,2), dragRange = T, ticks = F)
-            )
-          ),
-          wellPanel(
-            radioButtons(inputId = "smRNA", label = "RNA Category", 
-                         choices = c("miRNA", "piRNA", "tRNA", "snRNA")),
-            radioButtons(inputId = "colorby", label = "Color By", 
-                         choices = plottable)
-          ),
-          h3("Filtering"),
-          actionButton(inputId = 'recompute', label = 'Recompute Values'),
-          busyIndicator("In Progress: Please Wait", wait = 500),
-          h4(),
-          wellPanel(
-            checkboxGroupInput("checkdata", label = "Datasets", 
-                               choices = data_opts,
-                               selected = data_opts)
-          ),
-          wellPanel(
-            checkboxGroupInput("checkfluid", label = "Biofluids", 
-                               choices = biofluid_opts,
-                               selected = biofluid_opts)
-          ),
-          tags$head(tags$style("#plot_out{height:80vh !important;}"))
-      ),
-      column(8, h3("Generate Plots"),
-        wellPanel(
-          actionButton(inputId = "run", label = "Make New Plot", 
-                       icon = icon("bar-chart"), styleclass = "success"),
-          
-          downloadButton(outputId = "plot_down", label = "Download Plot")
-        ),
-         plotOutput("plot_out")
-      )
-   )
+  
+  titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
+  h4("James Diao, 3 March 2017"),
+  h5("https://jamesdiao.shinyapps.io/ercc-plotting-tool"),
+  fluidRow(
+    column(4,
+           h3("Control Panel"),
+           wellPanel(
+             radioButtons(inputId = "plotstyle", label = "Plotting Style", 
+                          choices = c("tSNE", "PCA"), selected = "PCA"),
+             conditionalPanel(
+               condition = "input.plotstyle == 'PCA'",
+               sliderInput(inputId = "pcs", label = "Principal Components (PCA Only)",
+                           min = 1, max = 5, value = c(1,2), dragRange = T, ticks = F)
+             )
+           ),
+           wellPanel(
+             radioButtons(inputId = "smRNA", label = "RNA Category", 
+                          choices = c("miRNA", "piRNA", "tRNA", "snRNA")),
+             radioButtons(inputId = "colorby", label = "Color By", 
+                          choices = plottable)
+           ),
+           h3("Filtering"),
+           actionButton(inputId = 'recompute', label = 'Recompute Values'),
+           busyIndicator("In Progress: Please Wait", wait = 500),
+           h4(),
+           wellPanel(
+             checkboxGroupInput("checkdata", label = "Datasets", 
+                                choices = data_opts,
+                                selected = data_opts)
+           ),
+           wellPanel(
+             checkboxGroupInput("checkfluid", label = "Biofluids", 
+                                choices = biofluid_opts,
+                                selected = biofluid_opts)
+           ),
+           tags$head(tags$style("#plot_out{height:80vh !important;}"))
+    ),
+    column(8, h3("Generate Plots"),
+           wellPanel(
+             actionButton(inputId = "run", label = "Make New Plot", 
+                          icon = icon("bar-chart"), styleclass = "success"),
+             
+             downloadButton(outputId = "plot_down", label = "Download Plot")
+           ),
+           plotOutput("plot_out")
+    )
+  )
 ))
 
 
@@ -179,34 +181,35 @@ server <- shinyServer(function(input, output, session) {
     #keep_data <- sample_map %in% input$checkdata
     #keep_biofluid <- biofluid %in% input$checkfluid
     #keep <- keep_data & keep_biofluid
+    colorby <- gsub(" ","_",input$colorby)
     if (input$plotstyle == "PCA") {
       reads_pca <- coord$pca[[input$smRNA]]
       pcs <- input$pcs
       if (pcs[1] == pcs[2])
         pcs[2] <- pcs[1] + 1
-      if (input$colorby == "Dataset"){
+      if (colorby == "Dataset"){
         plot_out <- pca_plot(pcs[1], pcs[2], biofluid, sample_map,
-                             coord$keep, reads_pca, input$smRNA, input$colorby)
+                             coord$keep, reads_pca, input$smRNA, colorby)
       } else {
-        plot_out <- pca_plot(pcs[1], pcs[2], biofluid, data_summary[,input$colorby][map], 
-                             coord$keep, reads_pca, input$smRNA, input$colorby)
+        plot_out <- pca_plot(pcs[1], pcs[2], biofluid, data_summary[,colorby][map], 
+                             coord$keep, reads_pca, input$smRNA, colorby)
       }
-
+      
     } else {
       reads_tsne <- coord$tsne[[input$smRNA]]
-      if (input$colorby == "Dataset"){
+      if (colorby == "Dataset"){
         plot_out <- tsne_plot(biofluid, sample_map, 
-                              coord$keep, reads_tsne, input$smRNA, input$colorby) 
+                              coord$keep, reads_tsne, input$smRNA, colorby) 
       } else {
-        plot_out <- tsne_plot(biofluid, data_summary[,input$colorby][map], 
-                              coord$keep, reads_tsne, input$smRNA, input$colorby)
+        plot_out <- tsne_plot(biofluid, data_summary[,colorby][map], 
+                              coord$keep, reads_tsne, input$smRNA, colorby)
       }
     }
     
     output$plot_out <- renderPlot({ plot_out })
     output$plot_down <- downloadHandler(
       filename = function() {
-        sprintf("%s_Plot_%s_%s.pdf", input$plotstyle, input$smRNA, input$colorby)
+        sprintf("%s_Plot_%s_%s.pdf", input$plotstyle, input$smRNA, colorby)
       },
       content = function(file) {
         pdf(file, onefile = TRUE, width = 13, height = 10)
