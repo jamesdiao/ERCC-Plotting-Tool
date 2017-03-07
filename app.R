@@ -52,7 +52,7 @@ import_tsv <- function(data_file) {
                                      mutate(ERCC_QC_Transcriptome_Reads = gsub(",","",ERCC_QC_Transcriptome_Reads) %>% as.integer) %>%
                                      mutate(ERCC_QC_Transcriptome_Genome_Ratio = ERCC_QC_Transcriptome_Genome_Ratio %>% as.numeric) %>% 
                                      mutate(Biofluid_Name = sub("Cerebrospinal fluid","CSF", 
-                                                                sub("Culture Media, Conditioned","Cultured_Media", Biofluid_Name))))
+                                                                sub("Culture Media, Conditioned","Cultured Media", Biofluid_Name))))
   biofluid_names <- table(data_summary$Biofluid_Name) %>% sort(decreasing = T) %>% names
   data_summary <- mutate(data_summary, Biofluid_Name = factor(Biofluid_Name, levels = biofluid_names))
 }
