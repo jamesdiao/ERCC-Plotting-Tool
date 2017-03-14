@@ -1,21 +1,21 @@
 # Set working directory to file folder
-outdir <- getSrcDirectory(function(dummy) {dummy})
-setwd(outdir)
+#outdir <- getSrcDirectory(function(dummy) {dummy})
+#setwd(outdir)
 
 #rsconnect::deployApp('/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool/')
 #setwd("/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool")
 
 # Install and load all required packages
-#pkg_list <- c("ggplot2","dplyr","shiny", "shinysky","tsne")
+#pkg_list <- c("ggplot2","dplyr","shiny","tsne")
 #installed <- pkg_list %in% installed.packages()[,"Package"]
 #if (!all(installed))
 #  install.packages(pkg_list[!installed])
 #sapply(pkg_list, require, character.only = T)
 
+#require(shinysky)
 require(ggplot2)
 require(dplyr)
 require(shiny)
-require(shinysky)
 require(tsne)
 
 path <- "Dependencies"
@@ -66,7 +66,7 @@ plottable <- gsub("_"," ","Dataset" %>%
 
 ### PRINCIPAL COMPONENTS ANALYSIS
 pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object, smRNA, colorby) {
-  data.frame(PCA_1 = pca_object[,axis_x], PCA_2 = pca_object[,axis_y], 
+  data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], 
              Shape = biofluid[keep], Color = color_elements[keep]) %>% 
     ggplot(aes(x = PCA_1, y = PCA_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
@@ -77,11 +77,11 @@ pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object,
           axis.text=element_text(size=11),
           legend.title=element_text(size=16), 
           legend.text=element_text(size=11)
-    )
+    ) + scale_shape_manual(values = c(16, 0, 2, 8:10))
 }
 ### t-DISTRIBUTED STOCHASTIC NEIGHBOR EMBEDDING
 tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorby) {
-  temp <- data.frame(tsne_object, Shape = biofluid[keep], Color = color_elements[keep]) %>%
+  temp <- data.frame(tsne_object[keep,], Shape = as.factor(biofluid[keep]), Color = color_elements[keep]) %>%
     ggplot(aes(x = tSNE_1, y = tSNE_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
     ggtitle(sprintf("tSNE Plot of %s Colored By %s", smRNA, colorby)) + 
@@ -90,7 +90,7 @@ tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorb
           axis.text=element_text(size=11),
           legend.title=element_text(size=16), 
           legend.text=element_text(size=11)
-    )
+    ) + scale_shape_manual(values = c(16, 0, 2, 8:10))
 }
 
 data_opts <- unique(sample_map) %>% setNames(unique(sample_map)) %>% as.list
@@ -100,7 +100,7 @@ biofluid_opts <- biofluid_opts %>% setNames(biofluid_opts) %>% as.list
 ui <- shinyUI(fluidPage(
   
   titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-  h4("James Diao, 3 March 2017"),
+  h4("James Diao, 14 March 2017"),
   h5("https://jamesdiao.shinyapps.io/ercc-plotting-tool"),
   fluidRow(
     column(4,
@@ -122,7 +122,7 @@ ui <- shinyUI(fluidPage(
            ),
            h3("Filtering"),
            actionButton(inputId = 'recompute', label = 'Recompute Values'),
-           busyIndicator("In Progress: Please Wait", wait = 500),
+           #busyIndicator("In Progress: Please Wait", wait = 500),
            h4(),
            wellPanel(
              checkboxGroupInput("checkdata", label = "Datasets", 
@@ -155,7 +155,7 @@ server <- shinyServer(function(input, output, session) {
   coord$pca <- all_reads_pca
   coord$tsne <- all_reads_tsne
   coord$keep <- rep(TRUE,length(sample_map))
-  
+
   observeEvent(input$recompute, {
     
     keep_data <- sample_map %in% input$checkdata
@@ -178,9 +178,11 @@ server <- shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$run, {
-    #keep_data <- sample_map %in% input$checkdata
-    #keep_biofluid <- biofluid %in% input$checkfluid
-    #keep <- keep_data & keep_biofluid
+    
+    keep_data <- sample_map %in% input$checkdata
+    keep_biofluid <- biofluid %in% input$checkfluid
+    coord$keep <- keep_data & keep_biofluid
+    
     colorby <- gsub(" ","_",input$colorby)
     if (input$plotstyle == "PCA") {
       reads_pca <- coord$pca[[input$smRNA]]
