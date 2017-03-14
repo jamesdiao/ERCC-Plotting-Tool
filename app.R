@@ -1,6 +1,6 @@
 # Set working directory to file folder
-#outdir <- getSrcDirectory(function(dummy) {dummy})
-#setwd(outdir)
+outdir <- getSrcDirectory(function(dummy) {dummy})
+setwd(outdir)
 
 #rsconnect::deployApp('/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool/')
 #setwd("/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool")
@@ -12,7 +12,7 @@
 #  install.packages(pkg_list[!installed])
 #sapply(pkg_list, require, character.only = T)
 
-#require(shinysky)
+require(shinysky)
 require(ggplot2)
 require(dplyr)
 require(shiny)
@@ -77,7 +77,7 @@ pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object,
           axis.text=element_text(size=11),
           legend.title=element_text(size=16), 
           legend.text=element_text(size=11)
-    ) + scale_shape_manual(values = c(16, 0, 2, 8:10))
+    ) + scale_shape_manual(values = c(0, 16:17, 8:10, 2, 16, 1))
 }
 ### t-DISTRIBUTED STOCHASTIC NEIGHBOR EMBEDDING
 tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorby) {
@@ -90,7 +90,7 @@ tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorb
           axis.text=element_text(size=11),
           legend.title=element_text(size=16), 
           legend.text=element_text(size=11)
-    ) + scale_shape_manual(values = c(16, 0, 2, 8:10))
+    ) + scale_shape_manual(values = c(0, 16:17, 8:10, 2, 16, 1))
 }
 
 data_opts <- unique(sample_map) %>% setNames(unique(sample_map)) %>% as.list
@@ -121,7 +121,7 @@ ui <- shinyUI(fluidPage(
                           choices = plottable)
            ),
            h3("Filtering"),
-           actionButton(inputId = 'recompute', label = 'Recompute Values'),
+           #actionButton(inputId = 'recompute', label = 'Recompute Values'),
            #busyIndicator("In Progress: Please Wait", wait = 500),
            h4(),
            wellPanel(
@@ -156,26 +156,25 @@ server <- shinyServer(function(input, output, session) {
   coord$tsne <- all_reads_tsne
   coord$keep <- rep(TRUE,length(sample_map))
 
-  observeEvent(input$recompute, {
+  #observeEvent(input$recompute, {
+  #  
+  #  keep_data <- sample_map %in% input$checkdata
+  #  keep_biofluid <- biofluid %in% input$checkfluid
+  #  coord$keep <- keep_data & keep_biofluid
     
-    keep_data <- sample_map %in% input$checkdata
-    keep_biofluid <- biofluid %in% input$checkfluid
-    coord$keep <- keep_data & keep_biofluid
+  #  coord$pca <- lapply(log_rna_reads, function(reads) {
+  #    rna_pca <- prcomp(reads[coord$keep,], center = T, scale. = F)
+  #    reduced_cols <- seq(1,min(100,ncol(rna_pca$x)))
+  #    return(rna_pca$x[,reduced_cols])
+  #  })
     
-    coord$pca <- lapply(log_rna_reads, function(reads) {
-      rna_pca <- prcomp(reads[coord$keep,], center = T, scale. = F)
-      reduced_cols <- seq(1,min(100,ncol(rna_pca$x)))
-      return(rna_pca$x[,reduced_cols])
-    })
-    
-    coord$tsne <- lapply(log_rna_reads, function(reads) {
-      log_tsne_out <- tsne(reads[coord$keep,], k=2, initial_dims = 30, perplexity = 30, 
-                           max_iter = 500, epoch = 50)
-      return(data.frame("tSNE_1" = log_tsne_out[,1], "tSNE_2" = log_tsne_out[,2]))
-    })
-    
-    
-  })
+  #  coord$tsne <- lapply(log_rna_reads, function(reads) {
+  #    log_tsne_out <- tsne(reads[coord$keep,], k=2, initial_dims = 30, perplexity = 30, 
+  #                         max_iter = 500, epoch = 50)
+  #    return(data.frame("tSNE_1" = log_tsne_out[,1], "tSNE_2" = log_tsne_out[,2]))
+  #  })
+  
+  #})
   
   observeEvent(input$run, {
     
