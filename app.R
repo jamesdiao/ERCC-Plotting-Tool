@@ -65,42 +65,46 @@ plottable <- gsub("_"," ","Dataset" %>%
 
 
 ### PRINCIPAL COMPONENTS ANALYSIS
-pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object, smRNA, colorby) {
+pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object, smRNA, colorby, color_set) {
   data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], 
              Shape = biofluid[keep], Color = color_elements[keep]) %>% 
     ggplot(aes(x = PCA_1, y = PCA_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
-    ggtitle(sprintf("PCA Plot of %s Colored By %s", smRNA, colorby)) + 
+    ggtitle(sprintf("PCA Plot of %s Colored by %s (%s Samples)", smRNA, gsub("_"," ",colorby), sum(keep))) + 
     xlab(paste0("PCA_",axis_x)) + ylab(paste0("PCA_",axis_y)) + 
     theme(plot.title = element_text(size=22,face="bold"), 
           axis.title=element_text(size=16), 
           axis.text=element_text(size=11),
           legend.title=element_text(size=16), 
-          legend.text=element_text(size=11)
-    ) + scale_shape_manual(values = c(0, 16:17, 8:10, 2, 16, 1))
+          legend.text=element_text(size=11)) + 
+    scale_shape_manual(values = c(0, 16:17, 8:10, 2, 16, 1)) +
+    scale_color_manual(values = color_set)
 }
 ### t-DISTRIBUTED STOCHASTIC NEIGHBOR EMBEDDING
-tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorby) {
-  temp <- data.frame(tsne_object[keep,], Shape = as.factor(biofluid[keep]), Color = color_elements[keep]) %>%
+tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorby, color_set) {
+  data.frame(tsne_object[keep,], Shape = as.factor(biofluid[keep]), Color = color_elements[keep]) %>%
     ggplot(aes(x = tSNE_1, y = tSNE_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
-    ggtitle(sprintf("tSNE Plot of %s Colored By %s", smRNA, colorby)) + 
+    ggtitle(sprintf("tSNE Plot of %s Colored by %s (%s Samples)", smRNA, gsub("_"," ",colorby), sum(keep))) + 
     theme(plot.title = element_text(size=22,face="bold"), 
           axis.title=element_text(size=16), 
           axis.text=element_text(size=11),
           legend.title=element_text(size=16), 
-          legend.text=element_text(size=11)
-    ) + scale_shape_manual(values = c(0, 16:17, 8:10, 2, 16, 1))
+          legend.text=element_text(size=11)) + 
+    scale_shape_manual(values = c(0, 16:17, 8:10, 2, 16, 1)) +
+    scale_color_manual(values = color_set)
 }
 
 data_opts <- unique(sample_map) %>% setNames(unique(sample_map)) %>% as.list
+  new_data_opts <- sprintf("%s (%s)", unlist(data_opts), table(sample_map)) %>% as.list
 biofluid_opts <- levels(data_summary$Biofluid_Name)
-biofluid_opts <- biofluid_opts %>% setNames(biofluid_opts) %>% as.list
+  biofluid_opts <- biofluid_opts %>% setNames(biofluid_opts) %>% as.list
+  new_biofluid_opts <- sprintf("%s (%s)", unlist(biofluid_opts), table(biofluid)) %>% as.list
 
 ui <- shinyUI(fluidPage(
   
   titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-  h4("James Diao, 14 March 2017"),
+  h4("James Diao, 19 March 2017"),
   h5("https://jamesdiao.shinyapps.io/ercc-plotting-tool"),
   fluidRow(
     column(4,
@@ -126,13 +130,13 @@ ui <- shinyUI(fluidPage(
            h4(),
            wellPanel(
              checkboxGroupInput("checkdata", label = "Datasets", 
-                                choices = data_opts,
-                                selected = data_opts)
+                                choices = new_data_opts,
+                                selected = new_data_opts)
            ),
            wellPanel(
              checkboxGroupInput("checkfluid", label = "Biofluids", 
-                                choices = biofluid_opts,
-                                selected = biofluid_opts)
+                                choices = new_biofluid_opts,
+                                selected = new_biofluid_opts)
            ),
            tags$head(tags$style("#plot_out{height:80vh !important;}"))
     ),
@@ -178,33 +182,53 @@ server <- shinyServer(function(input, output, session) {
   
   observeEvent(input$run, {
     
-    keep_data <- sample_map %in% input$checkdata
-    keep_biofluid <- biofluid %in% input$checkfluid
+    find_data <- function(original, new) {
+      sapply(original, function(data) any(grepl(data,new)))
+    }
+    
+    keep_data <- sample_map %>% find_data(input$checkdata)
+    keep_biofluid <- biofluid %>% find_data(input$checkfluid)
     coord$keep <- keep_data & keep_biofluid
     
+    new_data_opts <- unlist(data_opts) %>% setNames(NULL)
+    new_data_opts <- sprintf("%s (%s)", new_data_opts, 
+                             sapply(new_data_opts, function(data) sum(sample_map[coord$keep] == data)))
+    data_remain <- unique(sample_map) %>% find_data(input$checkdata)
+    updateCheckboxGroupInput(session, 'checkdata', choices = as.list(new_data_opts), 
+                             selected = as.list(new_data_opts[data_remain]))
+    
+    new_biofluid_opts <- unlist(biofluid_opts) %>% setNames(NULL)
+    new_biofluid_opts <- sprintf("%s (%s)", new_biofluid_opts, 
+                             sapply(new_biofluid_opts, function(data) sum(biofluid[coord$keep] == data)))
+    biofluid_remain <- levels(biofluid) %>% find_data(input$checkfluid)
+    updateCheckboxGroupInput(session, 'checkfluid', choices = as.list(new_biofluid_opts), 
+                             selected = as.list(new_biofluid_opts[biofluid_remain]))
+    
     colorby <- gsub(" ","_",input$colorby)
+    
+    if (colorby == "Dataset"){
+      color_elements <- sample_map
+    } else {
+      color_elements <- data_summary[,colorby][map]
+    }
+    
+    set <- unique(color_elements)
+    gg_color_hue <- function(n) {
+      hues = seq(15, 375, length = n + 1)
+      hcl(h = hues, l = 65, c = 100)[1:n]
+    }
+    color_set <- gg_color_hue(n = length(set)) %>% setNames(set)
+    color_set <- color_set[set %in% unique(color_elements[coord$keep])]
+    
     if (input$plotstyle == "PCA") {
       reads_pca <- coord$pca[[input$smRNA]]
       pcs <- input$pcs
-      if (pcs[1] == pcs[2])
-        pcs[2] <- pcs[1] + 1
-      if (colorby == "Dataset"){
-        plot_out <- pca_plot(pcs[1], pcs[2], biofluid, sample_map,
-                             coord$keep, reads_pca, input$smRNA, colorby)
-      } else {
-        plot_out <- pca_plot(pcs[1], pcs[2], biofluid, data_summary[,colorby][map], 
-                             coord$keep, reads_pca, input$smRNA, colorby)
-      }
-      
+      plot_out <- pca_plot(pcs[1], pcs[2] + (pcs[1] == pcs[2]), biofluid, color_elements, 
+                           coord$keep, reads_pca, input$smRNA, colorby, color_set)
     } else {
       reads_tsne <- coord$tsne[[input$smRNA]]
-      if (colorby == "Dataset"){
-        plot_out <- tsne_plot(biofluid, sample_map, 
-                              coord$keep, reads_tsne, input$smRNA, colorby) 
-      } else {
-        plot_out <- tsne_plot(biofluid, data_summary[,colorby][map], 
-                              coord$keep, reads_tsne, input$smRNA, colorby)
-      }
+      plot_out <- tsne_plot(biofluid, color_elements, coord$keep, 
+                            reads_tsne, input$smRNA, colorby, color_set)
     }
     
     output$plot_out <- renderPlot({ plot_out })
