@@ -55,6 +55,9 @@ import_tsv <- function(data_file) {
                                                                 sub("Culture Media, Conditioned","Cultured Media", Biofluid_Name))))
   biofluid_names <- table(data_summary$Biofluid_Name) %>% sort(decreasing = T) %>% names
   data_summary <- mutate(data_summary, Biofluid_Name = factor(Biofluid_Name, levels = biofluid_names))
+  locs <- apply(data_summary, 1, function(row) any(is.na(row)))
+  data_summary[locs,] <- replace(data_summary[locs,], is.na(data_summary[locs,]), 0) 
+  return(data_summary)
 }
 data_summary <- import_tsv(sprintf("%s/Data_Summary_1567.tsv", path)) %>% arrange(Biosample_Metadata_Accession)
 #850, 1369, 1567
