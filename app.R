@@ -107,7 +107,7 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 ui <- shinyUI(fluidPage(
   
   titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-  h4("James Diao, 19 March 2017"),
+  h4("James Diao, 20 March 2017"),
   h5("https://jamesdiao.shinyapps.io/ercc-plotting-tool"),
   fluidRow(
     column(4,
@@ -222,6 +222,9 @@ server <- shinyServer(function(input, output, session) {
     }
     color_set <- gg_color_hue(n = length(set)) %>% setNames(set)
     color_set <- color_set[set %in% unique(color_elements[coord$keep])]
+    color_names <- names(color_set)
+    if ( ("YES" %in% toupper(color_names)) & ("NO" %in% toupper(color_names)) )
+      names(color_set) <- rev(color_names)
     
     if (input$plotstyle == "PCA") {
       reads_pca <- coord$pca[[input$smRNA]]
