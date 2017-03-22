@@ -116,24 +116,28 @@ pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object,
     scale_color_manual(values = color_set)
 }
 
-pca_plotly <- function(axis_x, axis_y, color_elements, keep, pca_object) {
+pca_plotly <- function(axis_x, axis_y, color_elements, keep, pca_object, smRNA, colorby) {
   data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], Color = color_elements[keep]) %>% 
   plot_ly(x = ~PCA_1, y = ~PCA_2, color = ~Color, 
                hoverinfo = 'text', text = hover_text[keep],
-               marker = list(size = 4, symbol = 'square')) %>%
+               marker = list(size = 6, symbol = 'square')) %>%
     add_markers() %>%
-    layout(scene = list(xaxis = list(title = 'PC1'),
+    layout(title = sprintf("PCA Plot of %s Colored by %s (%s Samples)", 
+                           smRNA, gsub("_"," ",colorby), sum(keep)),
+           scene = list(xaxis = list(title = 'PC1'),
                         yaxis = list(title = 'PC2')))
 }
 
-pca_plotly_3d <- function(axis_x, axis_y, axis_z, color_elements, keep, pca_object) {
+pca_plotly_3d <- function(axis_x, axis_y, axis_z, color_elements, keep, pca_object, smRNA, colorby) {
   data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], PCA_3 = pca_object[keep, axis_z], 
              Color = color_elements[keep]) %>%
   plot_ly(x = ~PCA_1, y = ~PCA_2, z = ~PCA_3, color = ~Color, 
           hoverinfo = 'text', text = hover_text[keep],
-          marker = list(size = 4, symbol = 'square')) %>%
+          marker = list(size = 5, symbol = 'square')) %>%
     add_markers() %>%
-    layout(scene = list(xaxis = list(title = 'PC1'),
+    layout(title = sprintf("PCA Plot of %s Colored by %s (%s Samples)", 
+                           smRNA, gsub("_"," ",colorby), sum(keep)),
+           scene = list(xaxis = list(title = 'PC1'),
                         yaxis = list(title = 'PC2'),
                         zaxis = list(title = 'PC3')))
 }
@@ -153,25 +157,29 @@ tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorb
     scale_color_manual(values = color_set)
 }
 
-tsne_plotly <- function(color_elements, keep, tsne_object) {
+tsne_plotly <- function(color_elements, keep, tsne_object, smRNA, colorby) {
   data.frame(tSNE_1 = tsne_object[keep,1], tSNE_2 = tsne_object[keep,2], 
              Color = color_elements[keep]) %>% 
     plot_ly(x = ~tSNE_1, y = ~tSNE_2, color = ~Color,  
             hoverinfo = 'text', text = hover_text[keep],
-            marker = list(size = 4, symbol = 'square')) %>%
+            marker = list(size = 6, symbol = 'square')) %>%
     add_markers() %>%
-    layout(scene = list(xaxis = list(title = 'tSNE_1'),
+    layout(title = sprintf("tSNE Plot of %s Colored by %s (%s Samples)", 
+                           smRNA, gsub("_"," ",colorby), sum(keep)),
+           scene = list(xaxis = list(title = 'tSNE_1'),
                         yaxis = list(title = 'tSNE_2')))
 }
 
-tsne_plotly_3d <- function(color_elements, keep, tsne_object) {
+tsne_plotly_3d <- function(color_elements, keep, tsne_object, smRNA, colorby) {
   data.frame(tSNE_1 = tsne_object[keep,1], tSNE_2 = tsne_object[keep,2], tSNE_3 = tsne_object[keep,3], 
              Color = color_elements[keep]) %>% 
     plot_ly(x = ~tSNE_1, y = ~tSNE_2, z = ~tSNE_3, color = ~Color,  
             hoverinfo = 'text', text = hover_text[keep],
-            marker = list(size = 4, symbol = 'square')) %>%
+            marker = list(size = 5, symbol = 'square')) %>%
     add_markers() %>%
-    layout(scene = list(xaxis = list(title = 'tSNE_1'),
+    layout(title = sprintf("tSNE Plot of %s Colored by %s (%s Samples)", 
+                           smRNA, gsub("_"," ",colorby), sum(keep)),
+           scene = list(xaxis = list(title = 'tSNE_1'),
                         yaxis = list(title = 'tSNE_2'),
                         zaxis = list(title = 'tSNE_3')))
 }
@@ -185,21 +193,27 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 ui <- shinyUI(fluidPage(
   
   titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-  h4("James Diao, 21 March 2017"),
+  h4("James Diao, 22 March 2017"),
   fluidRow(
     column(4,
            h3("Control Panel"),
            wellPanel(
              radioButtons(inputId = "plotstyle", label = "Plotting Style", 
-                          choices = c("ggplot2", "plotly"), selected = "ggplot2"),
-             radioButtons(inputId = "dim", label = "Dimension (3D only works with Plotly)", 
-                          choices = c("2D", "3D"), selected = "2D"),
+                          inline = T, choices = c("ggplot2", "plotly"), selected = "ggplot2"),
+             radioButtons(inputId = "dim", label = "Dimension (3D only with plotly)", 
+                          inline = T, choices = c("2D", "3D"), selected = "2D"),
              radioButtons(inputId = "embedding", label = "Embedding", 
-                          choices = c("PCA", "tSNE"), selected = "PCA"),
+                          inline = T, choices = c("PCA", "tSNE"), selected = "PCA"),
              conditionalPanel(
-               condition = "input.embedding == 'PCA'",
-               selectizeInput(inputId = "pcs", label = "Principal Components (PCA Only)", 
-                              choices = sprintf("PC%s",1:100), selected = sprintf("PC%s",1:3), multiple = TRUE,
+               condition = "input.embedding == 'PCA' & input.dim == '2D'",
+               selectizeInput(inputId = "pcs_2d", label = "Principal Components (PCA Only)", 
+                              choices = sprintf("PC%s",1:10), selected = sprintf("PC%s",1:2), multiple = TRUE,
+                              options = list(maxItems = 2))
+             ), 
+             conditionalPanel(
+               condition = "input.embedding == 'PCA' & input.dim == '3D'",
+               selectizeInput(inputId = "pcs_3d", label = "Principal Components (PCA Only)", 
+                              choices = sprintf("PC%s",1:10), selected = sprintf("PC%s",1:3), multiple = TRUE,
                               options = list(maxItems = 3))
              )
            ),
@@ -302,13 +316,14 @@ server <- shinyServer(function(input, output, session) {
     
     if (input$embedding == "PCA") {
       reads_pca <- coord$pca[[input$smRNA]]
-      pcs <- gsub("[^0-9]", "", unlist(input$pcs) ) %>% as.numeric
+      pcs <- gsub("[^0-9]", "", unlist(input$pcs_2d) ) %>% as.numeric
       if (input$plotstyle == "plotly") {
         if (input$dim == "2D") {
-          plotly_out <- pca_plotly(pcs[1], pcs[2], color_elements, coord$keep, reads_pca)
+          plotly_out <- pca_plotly(pcs[1], pcs[2], color_elements, coord$keep, reads_pca, input$smRNA, colorby)
         }
         if (input$dim == "3D") {
-          plotly_out <- pca_plotly_3d(pcs[1], pcs[2], pcs[3], color_elements, coord$keep, reads_pca)
+          pcs <- gsub("[^0-9]", "", unlist(input$pcs_3d) ) %>% as.numeric
+          plotly_out <- pca_plotly_3d(pcs[1], pcs[2], pcs[3], color_elements, coord$keep, reads_pca, input$smRNA, colorby)
         }
         output$plotly_out <- renderPlotly({ plotly_out })
       }
@@ -325,10 +340,10 @@ server <- shinyServer(function(input, output, session) {
       reads_tsne_3d <- coord$tsne_3d[[input$smRNA]]
       if (input$plotstyle == "plotly") {
         if (input$dim == "2D") {
-          plotly_out <- tsne_plotly(color_elements, coord$keep, reads_tsne_2d)
+          plotly_out <- tsne_plotly(color_elements, coord$keep, reads_tsne_2d, input$smRNA, colorby)
         }
         if (input$dim == "3D") {
-          plotly_out <- tsne_plotly_3d(color_elements, coord$keep, reads_tsne_3d)
+          plotly_out <- tsne_plotly_3d(color_elements, coord$keep, reads_tsne_3d, input$smRNA, colorby)
         }
         output$plotly_out <- renderPlotly({ plotly_out })
       }
