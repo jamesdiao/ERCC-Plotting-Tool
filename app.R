@@ -91,6 +91,9 @@ hover_text <- sprintf('Biofluid: %s </br>Dataset: %s </br>Condition: %s </br>
                       abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
                       condition, anatomical, exRNA_src, cell_src, profiling, 
                       rna_kit, qc_std, gen_reads, tran_reads, gt_ratio)
+#hover_text <- sprintf('%s (%s)', 
+#                      abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
+#                      biofluid)
 
 plottable <- gsub("_"," ","Dataset" %>% 
                     c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
@@ -189,10 +192,10 @@ ui <- shinyUI(fluidPage(
            wellPanel(
              radioButtons(inputId = "plotstyle", label = "Plotting Style", 
                           choices = c("ggplot2", "plotly"), selected = "ggplot2"),
-             radioButtons(inputId = "embedding", label = "Embedding", 
-                          choices = c("PCA", "tSNE"), selected = "PCA"),
              radioButtons(inputId = "dim", label = "Dimension (3D only works with Plotly)", 
                           choices = c("2D", "3D"), selected = "2D"),
+             radioButtons(inputId = "embedding", label = "Embedding", 
+                          choices = c("PCA", "tSNE"), selected = "PCA"),
              conditionalPanel(
                condition = "input.embedding == 'PCA'",
                selectizeInput(inputId = "pcs", label = "Principal Components (PCA Only)", 
@@ -225,10 +228,13 @@ ui <- shinyUI(fluidPage(
     ),
     column(8, h3("Generate Plots"),
            wellPanel(
-             actionButton(inputId = "run", label = "Make New Plot", 
+             actionButton(inputId = "run", label = "Make New Plot ", 
                           icon = icon("bar-chart"), styleclass = "success"),
-             
-             downloadButton(outputId = "plot_down", label = "Download Plot")
+             conditionalPanel(
+               h5(),
+               condition = "input.plotstyle == 'ggplot2'",
+               downloadButton(outputId = "plot_down", label = "Download Plot")
+             )
            ),
            conditionalPanel(
              condition = "input.plotstyle == 'ggplot2'",

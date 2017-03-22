@@ -1,6 +1,6 @@
 # Plotting Tool for 1075 Samples from the exRNA Atlas
 
-#### James Diao, 28 February 2017
+#### James Diao, 21 March 2017
 
 Here are some brief notes on the usage of this visualization tool. <br />
 
@@ -43,14 +43,15 @@ Clone this source repository, containing our scripts and data: <br />
 ### APP DETAILS
 
 #### Control Panel  
-- **Plotting Style**: choose between the two embeddings (tSNE and PCA).  
-- **Principal Components**: choose which principal components to view. Only available for PCA.  
+- **Plotting Style**: choose between the two R packages that can be used to generate the plot. ggplot2 gives a static image, while plotly features a suite of interactive functions (zooming, filtering, rotating 3D plots, etc.)
+- **Dimension**: choose between 2 and 3 dimensions. 3D is only available when plotting with the Plotly package. If 2D is selected and 3 PCs are given, the last one is ignored. If 3D is selected and 2 PCs are given, the panel will display an empty plot. 
+- **Embedding**: choose between the two embeddings: t-distributed stochastic neighbor embedding (tSNE) and principal components analysis (PCA). 
+- **Principal Components**: choose which principal components to view, from 1-100. Only available for PCA.  
 - **RNA Category**: choose from miRNA, piRNA, tRNA, and snRNA.  
 - **Color By**: choose from Dataset, Condition, Anatomical\_Location, Biofluid\_Name, exRNA\_Source, Cell\_Culture\_Source, RNA\_Isolation\_Kit, ERCC\_QC\_Meets\_Standards. All labels are drawn from the exRNA atlas gridview at http://exrna-atlas.org/  
 
 #### Filtering  
-- **Recompute Values**: click after modifying the below checkboxes to recompute PCA/tSNE coordinate spaces on data subset. 
-- **Datsets**: uncheck boxes to exclude all data in that dataset.  
+- **Datsets**: uncheck boxes to exclude all data in that dataset. 
 - **Biofluids**: uncheck boxes to exclude all data of that biofluid.  
 
 #### Generate Plots  
@@ -65,10 +66,11 @@ Clone this source repository, containing our scripts and data: <br />
  - `all_log_rna_reads.rds` contains a list of the log-transformed data frames (sample x RNA) for miRNA, piRNA, tRNA, and snRNA reads. 
  - `all_log_PCA_reduced.rds` contains a list of the top 100 PCA axes for miRNA, piRNA, tRNA, and snRNA. PCA was performed using the prcomp command from the stats R package. The data (in reads-per-million) was log-transformed after a small constant was added (to remove 0s). Before PCA, the data was centered but not rescaled. 
  - `all_log_tSNE_reduced.rds` contains the 2-dimensional tSNE embeddings for miRNA, piRNA, tRNA, and snRNA. tSNE was performed using the tsne R package with default settings. The embedding was computed on log-transformed RPM data after a small constant was added (to remove 0s). 
+  - `all_3D_log_tSNE_reduced.rds` contains the 3-dimensional tSNE embeddings, computed analogously to the above. 
   - `Data_Summary_1567.tsv` contains the metadata collected from the exRNA atlas gridview. Rows are mapped to samples and used to assign labels. 
   - `map.rds` contains the mapping from samples to sample names in `Data_Summary_1567.tsv`. 
   - `sample_map.rds` contains dataset identity of each sample.
-2. `Make_Dependency_Files/` contains a `Make_Dependencies.Rmd`, which can be knitted to automatically generate all .rds dependencies. This folder also contains the original datasets from the ExRNA Atlas in `miRNA/`, `piRNA/`, `tRNA/`, `smallRNAQuants/`, and `QC_Results/`. 
+3. `Make_Dependency_Files/` contains a `Make_Dependencies.Rmd`, which can be knitted to automatically generate all .rds dependencies. This folder also contains the original datasets from the ExRNA Atlas in `miRNA/`, `piRNA/`, `tRNA/`, `smallRNAQuants/`, and `QC_Results/`. 
 
 -----------------------------------------------------------------
 

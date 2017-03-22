@@ -121,8 +121,8 @@ $(document).ready(function () {
 
 <div id="plotting-tool-for-1075-samples-from-the-exrna-atlas" class="section level1">
 <h1>Plotting Tool for 1075 Samples from the exRNA Atlas</h1>
-<div id="james-diao-28-february-2017" class="section level4">
-<h4>James Diao, 28 February 2017</h4>
+<div id="james-diao-21-march-2017" class="section level4">
+<h4>James Diao, 21 March 2017</h4>
 <p>Here are some brief notes on the usage of this visualization tool. <br /></p>
 <hr />
 </div>
@@ -171,9 +171,10 @@ The application is capped at 25 active user-hours per month. It is identical to 
 <div id="control-panel" class="section level4">
 <h4>Control Panel</h4>
 <ul>
-<li><strong>Plotting Style</strong>: choose between the two embeddings (tSNE and PCA).<br />
-</li>
-<li><strong>Principal Components</strong>: choose which principal components to view. Only available for PCA.<br />
+<li><strong>Plotting Style</strong>: choose between the two R packages that can be used to generate the plot. ggplot2 gives a static image, while plotly features a suite of interactive functions (zooming, filtering, rotating 3D plots, etc.)</li>
+<li><strong>Dimension</strong>: choose between 2 and 3 dimensions. 3D is only available when plotting with the Plotly package. If 2D is selected and 3 PCs are given, the last one is ignored. If 3D is selected and 2 PCs are given, the panel will display an empty plot.</li>
+<li><strong>Embedding</strong>: choose between the two embeddings: t-distributed stochastic neighbor embedding (tSNE) and principal components analysis (PCA).</li>
+<li><strong>Principal Components</strong>: choose which principal components to view, from 1-100. Only available for PCA.<br />
 </li>
 <li><strong>RNA Category</strong>: choose from miRNA, piRNA, tRNA, and snRNA.<br />
 </li>
@@ -183,9 +184,7 @@ The application is capped at 25 active user-hours per month. It is identical to 
 <div id="filtering" class="section level4">
 <h4>Filtering</h4>
 <ul>
-<li><strong>Recompute Values</strong>: click after modifying the below checkboxes to recompute PCA/tSNE coordinate spaces on data subset.</li>
-<li><strong>Datsets</strong>: uncheck boxes to exclude all data in that dataset.<br />
-</li>
+<li><strong>Datsets</strong>: uncheck boxes to exclude all data in that dataset.</li>
 <li><strong>Biofluids</strong>: uncheck boxes to exclude all data of that biofluid.</li>
 </ul>
 </div>
@@ -209,11 +208,12 @@ The application is capped at 25 active user-hours per month. It is identical to 
 <li><code>all_log_rna_reads.rds</code> contains a list of the log-transformed data frames (sample x RNA) for miRNA, piRNA, tRNA, and snRNA reads.</li>
 <li><code>all_log_PCA_reduced.rds</code> contains a list of the top 100 PCA axes for miRNA, piRNA, tRNA, and snRNA. PCA was performed using the prcomp command from the stats R package. The data (in reads-per-million) was log-transformed after a small constant was added (to remove 0s). Before PCA, the data was centered but not rescaled.</li>
 <li><code>all_log_tSNE_reduced.rds</code> contains the 2-dimensional tSNE embeddings for miRNA, piRNA, tRNA, and snRNA. tSNE was performed using the tsne R package with default settings. The embedding was computed on log-transformed RPM data after a small constant was added (to remove 0s).</li>
+<li><code>all_3D_log_tSNE_reduced.rds</code> contains the 3-dimensional tSNE embeddings, computed analogously to the above.</li>
 <li><code>Data_Summary_1567.tsv</code> contains the metadata collected from the exRNA atlas gridview. Rows are mapped to samples and used to assign labels.</li>
 <li><code>map.rds</code> contains the mapping from samples to sample names in <code>Data_Summary_1567.tsv</code>.</li>
 <li><code>sample_map.rds</code> contains dataset identity of each sample.</li>
 </ul>
-<ol start="2" style="list-style-type: decimal">
+<ol start="3" style="list-style-type: decimal">
 <li><code>Make_Dependency_Files/</code> contains a <code>Make_Dependencies.Rmd</code>, which can be knitted to automatically generate all .rds dependencies. This folder also contains the original datasets from the ExRNA Atlas in <code>miRNA/</code>, <code>piRNA/</code>, <code>tRNA/</code>, <code>smallRNAQuants/</code>, and <code>QC_Results/</code>.</li>
 </ol>
 <hr />
