@@ -12,18 +12,21 @@ setwd(outdir)
 #  install.packages(pkg_list[!installed])
 #sapply(pkg_list, require, character.only = T)
 
+require(plotly)
 require(shinysky)
 require(ggplot2)
 require(dplyr)
 require(shiny)
 require(tsne)
+options(warn = -1) 
 
 path <- "Dependencies"
 
 ### LOAD FILES
 log_rna_reads <- readRDS(sprintf("%s/all_log_rna_reads.rds", path))
 all_reads_pca <- readRDS(sprintf("%s/all_log_PCA_reduced.rds", path))
-all_reads_tsne <- readRDS(sprintf("%s/all_log_tSNE_reduced.rds", path))
+all_reads_tsne_2d <- readRDS(sprintf("%s/all_log_tSNE_reduced.rds", path))
+all_reads_tsne_3d <- readRDS(sprintf("%s/all_3D_log_tSNE_reduced.rds", path))
 sample_map <- readRDS(sprintf("%s/sample_map.rds", path))
 map <- readRDS(sprintf("%s/map.rds", path))
 
@@ -57,12 +60,38 @@ import_tsv <- function(data_file) {
   data_summary <- mutate(data_summary, Biofluid_Name = factor(Biofluid_Name, levels = biofluid_names))
   locs <- apply(data_summary, 1, function(row) any(is.na(row)))
   data_summary[locs,] <- replace(data_summary[locs,], is.na(data_summary[locs,]), 0) 
+  for (i in 1:ncol(data_summary)) {
+    if (is.character(data_summary[,i])) {
+      data_summary[,i] <- substr(data_summary[,i], 1, 29)
+    }
+  }
   return(data_summary)
 }
 data_summary <- import_tsv(sprintf("%s/Data_Summary_1567.tsv", path)) %>% arrange(Biosample_Metadata_Accession)
 #850, 1369, 1567
 
 biofluid <- data_summary[map,]$Biofluid_Name
+condition <- data_summary[map,]$Condition
+anatomical <- data_summary[map,]$Anatomical_Location
+exRNA_src <- data_summary[map,]$exRNA_Source
+cell_src <- data_summary[map,]$Cell_Culture_Source
+profiling <- data_summary[map,]$Profiling_Assay
+rna_kit <- data_summary[map,]$RNA_Isolation_Kit
+qc_std <- data_summary[map,]$ERCC_QC_Meets_Standards
+gen_reads <- data_summary[map,]$ERCC_QC_Reference_Genome_Reads
+tran_reads <- data_summary[map,]$ERCC_QC_Transcriptome_Reads
+gt_ratio <- data_summary[map,]$ERCC_QC_Transcriptome_Genome_Ratio
+
+hover_text <- sprintf('Biofluid: %s </br>Dataset: %s </br>Condition: %s </br>
+                      Anatomy: %s </br>exRNA Source: %s </br>
+                      Cell Source: %s </br>Profiling Assay: %s </br>
+                      RNA Isolation Kit: %s </br> QC Standard: %s </br>Genome Reads: %s </br>
+                      Trnscpt Reads: %s </br>Trnscpt/Genome Ratio: %s',
+                      biofluid, 
+                      abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
+                      condition, anatomical, exRNA_src, cell_src, profiling, 
+                      rna_kit, qc_std, gen_reads, tran_reads, gt_ratio)
+
 plottable <- gsub("_"," ","Dataset" %>% 
                     c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
 
@@ -83,6 +112,29 @@ pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object,
     scale_shape_manual(values = c(0, 16:17, 8:10, 2, 16, 1)) +
     scale_color_manual(values = color_set)
 }
+
+pca_plotly <- function(axis_x, axis_y, color_elements, keep, pca_object) {
+  data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], Color = color_elements[keep]) %>% 
+  plot_ly(x = ~PCA_1, y = ~PCA_2, color = ~Color, 
+               hoverinfo = 'text', text = hover_text[keep],
+               marker = list(size = 4, symbol = 'square')) %>%
+    add_markers() %>%
+    layout(scene = list(xaxis = list(title = 'PC1'),
+                        yaxis = list(title = 'PC2')))
+}
+
+pca_plotly_3d <- function(axis_x, axis_y, axis_z, color_elements, keep, pca_object) {
+  data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], PCA_3 = pca_object[keep, axis_z], 
+             Color = color_elements[keep]) %>%
+  plot_ly(x = ~PCA_1, y = ~PCA_2, z = ~PCA_3, color = ~Color, 
+          hoverinfo = 'text', text = hover_text[keep],
+          marker = list(size = 4, symbol = 'square')) %>%
+    add_markers() %>%
+    layout(scene = list(xaxis = list(title = 'PC1'),
+                        yaxis = list(title = 'PC2'),
+                        zaxis = list(title = 'PC3')))
+}
+
 ### t-DISTRIBUTED STOCHASTIC NEIGHBOR EMBEDDING
 tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorby, color_set) {
   data.frame(tsne_object[keep,], Shape = as.factor(biofluid[keep]), Color = color_elements[keep]) %>%
@@ -98,6 +150,29 @@ tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorb
     scale_color_manual(values = color_set)
 }
 
+tsne_plotly <- function(color_elements, keep, tsne_object) {
+  data.frame(tSNE_1 = tsne_object[keep,1], tSNE_2 = tsne_object[keep,2], 
+             Color = color_elements[keep]) %>% 
+    plot_ly(x = ~tSNE_1, y = ~tSNE_2, color = ~Color,  
+            hoverinfo = 'text', text = hover_text[keep],
+            marker = list(size = 4, symbol = 'square')) %>%
+    add_markers() %>%
+    layout(scene = list(xaxis = list(title = 'tSNE_1'),
+                        yaxis = list(title = 'tSNE_2')))
+}
+
+tsne_plotly_3d <- function(color_elements, keep, tsne_object) {
+  data.frame(tSNE_1 = tsne_object[keep,1], tSNE_2 = tsne_object[keep,2], tSNE_3 = tsne_object[keep,3], 
+             Color = color_elements[keep]) %>% 
+    plot_ly(x = ~tSNE_1, y = ~tSNE_2, z = ~tSNE_3, color = ~Color,  
+            hoverinfo = 'text', text = hover_text[keep],
+            marker = list(size = 4, symbol = 'square')) %>%
+    add_markers() %>%
+    layout(scene = list(xaxis = list(title = 'tSNE_1'),
+                        yaxis = list(title = 'tSNE_2'),
+                        zaxis = list(title = 'tSNE_3')))
+}
+
 data_opts <- unique(sample_map) %>% setNames(unique(sample_map)) %>% as.list
   new_data_opts <- sprintf("%s (%s)", unlist(data_opts), table(sample_map)) %>% as.list
 biofluid_opts <- levels(data_summary$Biofluid_Name)
@@ -107,18 +182,22 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 ui <- shinyUI(fluidPage(
   
   titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-  h4("James Diao, 20 March 2017"),
-  h5("https://jamesdiao.shinyapps.io/ercc-plotting-tool"),
+  h4("James Diao, 21 March 2017"),
   fluidRow(
     column(4,
            h3("Control Panel"),
            wellPanel(
              radioButtons(inputId = "plotstyle", label = "Plotting Style", 
-                          choices = c("tSNE", "PCA"), selected = "PCA"),
+                          choices = c("ggplot2", "plotly"), selected = "ggplot2"),
+             radioButtons(inputId = "embedding", label = "Embedding", 
+                          choices = c("PCA", "tSNE"), selected = "PCA"),
+             radioButtons(inputId = "dim", label = "Dimension (3D only works with Plotly)", 
+                          choices = c("2D", "3D"), selected = "2D"),
              conditionalPanel(
-               condition = "input.plotstyle == 'PCA'",
-               sliderInput(inputId = "pcs", label = "Principal Components (PCA Only)",
-                           min = 1, max = 5, value = c(1,2), dragRange = T, ticks = F)
+               condition = "input.embedding == 'PCA'",
+               selectizeInput(inputId = "pcs", label = "Principal Components (PCA Only)", 
+                              choices = sprintf("PC%s",1:100), selected = sprintf("PC%s",1:3), multiple = TRUE,
+                              options = list(maxItems = 3))
              )
            ),
            wellPanel(
@@ -141,7 +220,8 @@ ui <- shinyUI(fluidPage(
                                 choices = new_biofluid_opts,
                                 selected = new_biofluid_opts)
            ),
-           tags$head(tags$style("#plot_out{height:80vh !important;}"))
+           tags$head(tags$style("#plot_out{height:80vh !important;}")),
+           tags$head(tags$style("#plotly_out{height:80vh !important;}"))
     ),
     column(8, h3("Generate Plots"),
            wellPanel(
@@ -150,7 +230,14 @@ ui <- shinyUI(fluidPage(
              
              downloadButton(outputId = "plot_down", label = "Download Plot")
            ),
-           plotOutput("plot_out")
+           conditionalPanel(
+             condition = "input.plotstyle == 'ggplot2'",
+             plotOutput("plot_out")
+           ),
+           conditionalPanel(
+             condition = "input.plotstyle == 'plotly'",
+             plotlyOutput("plotly_out")
+           )
     )
   )
 ))
@@ -160,28 +247,9 @@ server <- shinyServer(function(input, output, session) {
   
   coord <- reactiveValues()
   coord$pca <- all_reads_pca
-  coord$tsne <- all_reads_tsne
+  coord$tsne_2d <- all_reads_tsne_2d
+  coord$tsne_3d <- all_reads_tsne_3d
   coord$keep <- rep(TRUE,length(sample_map))
-
-  #observeEvent(input$recompute, {
-  #  
-  #  keep_data <- sample_map %in% input$checkdata
-  #  keep_biofluid <- biofluid %in% input$checkfluid
-  #  coord$keep <- keep_data & keep_biofluid
-    
-  #  coord$pca <- lapply(log_rna_reads, function(reads) {
-  #    rna_pca <- prcomp(reads[coord$keep,], center = T, scale. = F)
-  #    reduced_cols <- seq(1,min(100,ncol(rna_pca$x)))
-  #    return(rna_pca$x[,reduced_cols])
-  #  })
-    
-  #  coord$tsne <- lapply(log_rna_reads, function(reads) {
-  #    log_tsne_out <- tsne(reads[coord$keep,], k=2, initial_dims = 30, perplexity = 30, 
-  #                         max_iter = 500, epoch = 50)
-  #    return(data.frame("tSNE_1" = log_tsne_out[,1], "tSNE_2" = log_tsne_out[,2]))
-  #  })
-  
-  #})
   
   observeEvent(input$run, {
     
@@ -226,21 +294,48 @@ server <- shinyServer(function(input, output, session) {
     if ( ("YES" %in% toupper(color_names)) & ("NO" %in% toupper(color_names)) )
       names(color_set) <- rev(color_names)
     
-    if (input$plotstyle == "PCA") {
+    if (input$embedding == "PCA") {
       reads_pca <- coord$pca[[input$smRNA]]
-      pcs <- input$pcs
-      plot_out <- pca_plot(pcs[1], pcs[2] + (pcs[1] == pcs[2]), biofluid, color_elements, 
-                           coord$keep, reads_pca, input$smRNA, colorby, color_set)
-    } else {
-      reads_tsne <- coord$tsne[[input$smRNA]]
-      plot_out <- tsne_plot(biofluid, color_elements, coord$keep, 
-                            reads_tsne, input$smRNA, colorby, color_set)
+      pcs <- gsub("[^0-9]", "", unlist(input$pcs) ) %>% as.numeric
+      if (input$plotstyle == "plotly") {
+        if (input$dim == "2D") {
+          plotly_out <- pca_plotly(pcs[1], pcs[2], color_elements, coord$keep, reads_pca)
+        }
+        if (input$dim == "3D") {
+          plotly_out <- pca_plotly_3d(pcs[1], pcs[2], pcs[3], color_elements, coord$keep, reads_pca)
+        }
+        output$plotly_out <- renderPlotly({ plotly_out })
+      }
+      if (input$plotstyle == "ggplot2") {
+        plot_out <- pca_plot(pcs[1], pcs[2] + (pcs[1] == pcs[2]), biofluid, color_elements, 
+                             coord$keep, reads_pca, input$smRNA, colorby, color_set)
+        output$plot_out <- renderPlot({ plot_out })
+        
+      }
+    } 
+    
+    if (input$embedding == "tSNE") {
+      reads_tsne_2d <- coord$tsne_2d[[input$smRNA]]
+      reads_tsne_3d <- coord$tsne_3d[[input$smRNA]]
+      if (input$plotstyle == "plotly") {
+        if (input$dim == "2D") {
+          plotly_out <- tsne_plotly(color_elements, coord$keep, reads_tsne_2d)
+        }
+        if (input$dim == "3D") {
+          plotly_out <- tsne_plotly_3d(color_elements, coord$keep, reads_tsne_3d)
+        }
+        output$plotly_out <- renderPlotly({ plotly_out })
+      }
+      if (input$plotstyle == "ggplot2") {
+        plot_out <- tsne_plot(biofluid, color_elements, coord$keep, 
+                                  reads_tsne_2d, input$smRNA, colorby, color_set)
+        output$plot_out <- renderPlot({ plot_out })
+      }
     }
     
-    output$plot_out <- renderPlot({ plot_out })
     output$plot_down <- downloadHandler(
       filename = function() {
-        sprintf("%s_Plot_%s_%s.pdf", input$plotstyle, input$smRNA, colorby)
+        sprintf("%s_Plot_%s_%s.pdf", input$embedding, input$smRNA, colorby)
       },
       content = function(file) {
         pdf(file, onefile = TRUE, width = 13, height = 10)
@@ -255,6 +350,34 @@ server <- shinyServer(function(input, output, session) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
+
+
+
+
+
+#observeEvent(input$recompute, {
+#  
+#  keep_data <- sample_map %in% input$checkdata
+#  keep_biofluid <- biofluid %in% input$checkfluid
+#  coord$keep <- keep_data & keep_biofluid
+
+#  coord$pca <- lapply(log_rna_reads, function(reads) {
+#    rna_pca <- prcomp(reads[coord$keep,], center = T, scale. = F)
+#    reduced_cols <- seq(1,min(100,ncol(rna_pca$x)))
+#    return(rna_pca$x[,reduced_cols])
+#  })
+
+#  coord$tsne <- lapply(log_rna_reads, function(reads) {
+#    log_tsne_out <- tsne(reads[coord$keep,], k=2, initial_dims = 30, perplexity = 30, 
+#                         max_iter = 500, epoch = 50)
+#    return(data.frame("tSNE_1" = log_tsne_out[,1], "tSNE_2" = log_tsne_out[,2]))
+#  })
+
+#})
+
+
+
 
 
 
