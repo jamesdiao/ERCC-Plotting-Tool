@@ -98,7 +98,6 @@ hover_text <- sprintf('Biofluid: %s </br>Dataset: %s </br>Condition: %s </br>
 plottable <- gsub("_"," ","Dataset" %>% 
                     c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
 
-
 ### PRINCIPAL COMPONENTS ANALYSIS
 pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object, smRNA, colorby, color_set) {
   data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], 
@@ -200,21 +199,28 @@ ui <- shinyUI(fluidPage(
            wellPanel(
              radioButtons(inputId = "plotstyle", label = "Plotting Style", 
                           inline = T, choices = c("ggplot2", "plotly"), selected = "ggplot2"),
-             radioButtons(inputId = "dim", label = "Dimension (3D only with plotly)", 
-                          inline = T, choices = c("2D", "3D"), selected = "2D"),
+             conditionalPanel(
+               condition = "input.plotstyle == 'plotly'",
+               radioButtons(inputId = "dim", label = "Dimension", 
+                            inline = T, choices = c("2D", "3D"), selected = "2D")
+             ),
              radioButtons(inputId = "embedding", label = "Embedding", 
                           inline = T, choices = c("PCA", "tSNE"), selected = "PCA"),
              conditionalPanel(
                condition = "input.embedding == 'PCA' & input.dim == '2D'",
-               selectizeInput(inputId = "pcs_2d", label = "Principal Components (PCA Only)", 
-                              choices = sprintf("PC%s",1:10), selected = sprintf("PC%s",1:2), multiple = TRUE,
-                              options = list(maxItems = 2))
+               checkboxGroupInput(inputId = "pcs_2d", label = "Principal Components", 
+                            inline = T, choices = sprintf("PC%s",1:5), selected = sprintf("PC%s",1:2))
+               #selectizeInput(inputId = "pcs_2d", label = "Principal Components", 
+              #                choices = sprintf("PC%s",1:10), selected = sprintf("PC%s",1:2), multiple = TRUE,
+              #                options = list(maxItems = 2))
              ), 
              conditionalPanel(
                condition = "input.embedding == 'PCA' & input.dim == '3D'",
-               selectizeInput(inputId = "pcs_3d", label = "Principal Components (PCA Only)", 
-                              choices = sprintf("PC%s",1:10), selected = sprintf("PC%s",1:3), multiple = TRUE,
-                              options = list(maxItems = 3))
+               checkboxGroupInput(inputId = "pcs_3d", label = "Principal Components", 
+                           inline = T, choices = sprintf("PC%s",1:5), selected = sprintf("PC%s",1:3))
+               #selectizeInput(inputId = "pcs_3d", label = "Principal Components", 
+              #                choices = sprintf("PC%s",1:10), selected = sprintf("PC%s",1:3), multiple = TRUE,
+              #                options = list(maxItems = 3))
              )
            ),
            wellPanel(
@@ -242,11 +248,15 @@ ui <- shinyUI(fluidPage(
     ),
     column(8, h3("Generate Plots"),
            wellPanel(
-             actionButton(inputId = "run", label = "Make New Plot ", 
-                          icon = icon("bar-chart"), styleclass = "success"),
              conditionalPanel(
-               h5(),
+               condition = "input.plotstyle == 'plotly'",
+               actionButton(inputId = "run_plotly", label = "Make New Plot ", 
+                            icon = icon("bar-chart"), styleclass = "success")
+             ),
+             conditionalPanel(
                condition = "input.plotstyle == 'ggplot2'",
+               actionButton(inputId = "run_ggplot2", label = "Make New Plot ", 
+                            icon = icon("bar-chart"), styleclass = "success"),
                downloadButton(outputId = "plot_down", label = "Download Plot")
              )
            ),
@@ -271,7 +281,30 @@ server <- shinyServer(function(input, output, session) {
   coord$tsne_3d <- all_reads_tsne_3d
   coord$keep <- rep(TRUE,length(sample_map))
   
-  observeEvent(input$run, {
+  rv2 <- reactiveValues(lstval2=1:2,curval2=1:2)
+  rv3 <- reactiveValues(lstval3=1:3,curval3=1:3)
+  
+  observeEvent(input$pcs_2d, {
+    rv2$lstval <- rv2$curval
+    rv2$curval <- input$pcs_2d %>% substr(3,3) %>% as.integer 
+    if(length(rv2$curval) > 2) {
+      updateCheckboxGroupInput(session, "pcs_2d", 
+        selected = sprintf("PC%s", rv2$curval[!(rv2$curval %in% rv2$lstval)] %>% 
+          c(sort(rv2$lstval)) %>% head(2) %>% sort))
+    }
+  })
+  
+  observeEvent(input$pcs_3d, {
+    rv3$lstval <- rv3$curval
+    rv3$curval <- input$pcs_3d %>% substr(3,3) %>% as.integer 
+    if(length(rv3$curval) > 3) {
+      updateCheckboxGroupInput(session, "pcs_3d", 
+        selected = sprintf("PC%s", rv3$curval[!(rv3$curval %in% rv3$lstval)] %>% 
+          c(sort(rv3$lstval)) %>% head(3) %>% sort))
+    }
+  })
+  
+  observeEvent(input$run_ggplot2 | input$run_plotly, {
     
     find_data <- function(original, new) {
       sapply(original, function(data) any(grepl(data,new)))
