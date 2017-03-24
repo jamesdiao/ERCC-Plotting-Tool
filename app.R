@@ -192,7 +192,7 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 ui <- shinyUI(fluidPage(
   
   titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-  h4("James Diao, 22 March 2017"),
+  h4("James Diao, 24 March 2017"),
   fluidRow(
     column(4,
            h3("Control Panel"),
@@ -260,6 +260,7 @@ ui <- shinyUI(fluidPage(
                downloadButton(outputId = "plot_down", label = "Download Plot")
              )
            ),
+           shinyalert(id = 'alert', click.hide = TRUE, auto.close.after = 10),
            conditionalPanel(
              condition = "input.plotstyle == 'ggplot2'",
              plotOutput("plot_out")
@@ -304,8 +305,17 @@ server <- shinyServer(function(input, output, session) {
     }
   })
   
+  observeEvent(input$plotstyle, {
+    if (input$plotstyle == 'ggplot2') {
+      updateRadioButtons(session, "dim", selected = '2D')
+    }
+  })
+  
   observeEvent(input$run_ggplot2 | input$run_plotly, {
-    
+  if (input$embedding == "PCA" & (length(input$pcs_2d) < 2 | length(input$pcs_3d) < 3)) {
+    showshinyalert(session, id = "alert", HTMLtext = 'Please select more principal components', 
+                   styleclass = 'danger')
+  } else {
     find_data <- function(original, new) {
       sapply(original, function(data) any(grepl(data,new)))
     }
@@ -398,6 +408,7 @@ server <- shinyServer(function(input, output, session) {
         dev.off()
       }
     )
+  }
   })
   
 })
