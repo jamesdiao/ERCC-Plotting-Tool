@@ -123,8 +123,8 @@ pca_plotly <- function(axis_x, axis_y, color_elements, keep, pca_object, smRNA, 
     add_markers() %>%
     layout(title = sprintf("PCA Plot of %s Colored by %s (%s Samples)", 
                            smRNA, gsub("_"," ",colorby), sum(keep)),
-           scene = list(xaxis = list(title = 'PC1'),
-                        yaxis = list(title = 'PC2')))
+           xaxis = list(title = sprintf('PC %s', axis_x)),
+           yaxis = list(title = sprintf('PC %s', axis_y)))
 }
 
 pca_plotly_3d <- function(axis_x, axis_y, axis_z, color_elements, keep, pca_object, smRNA, colorby) {
@@ -136,9 +136,9 @@ pca_plotly_3d <- function(axis_x, axis_y, axis_z, color_elements, keep, pca_obje
     add_markers() %>%
     layout(title = sprintf("PCA Plot of %s Colored by %s (%s Samples)", 
                            smRNA, gsub("_"," ",colorby), sum(keep)),
-           scene = list(xaxis = list(title = 'PC1'),
-                        yaxis = list(title = 'PC2'),
-                        zaxis = list(title = 'PC3')))
+           xaxis = list(title = sprintf('PC %s', axis_x)),
+           yaxis = list(title = sprintf('PC %s', axis_y)),
+           zaxis = list(title = sprintf('PC %s', axis_z)))
 }
 
 ### t-DISTRIBUTED STOCHASTIC NEIGHBOR EMBEDDING
@@ -165,8 +165,8 @@ tsne_plotly <- function(color_elements, keep, tsne_object, smRNA, colorby) {
     add_markers() %>%
     layout(title = sprintf("tSNE Plot of %s Colored by %s (%s Samples)", 
                            smRNA, gsub("_"," ",colorby), sum(keep)),
-           scene = list(xaxis = list(title = 'tSNE_1'),
-                        yaxis = list(title = 'tSNE_2')))
+           scene = list(xaxis = list(title = 'tSNE 1'),
+                        yaxis = list(title = 'tSNE 2')))
 }
 
 tsne_plotly_3d <- function(color_elements, keep, tsne_object, smRNA, colorby) {
@@ -178,9 +178,9 @@ tsne_plotly_3d <- function(color_elements, keep, tsne_object, smRNA, colorby) {
     add_markers() %>%
     layout(title = sprintf("tSNE Plot of %s Colored by %s (%s Samples)", 
                            smRNA, gsub("_"," ",colorby), sum(keep)),
-           scene = list(xaxis = list(title = 'tSNE_1'),
-                        yaxis = list(title = 'tSNE_2'),
-                        zaxis = list(title = 'tSNE_3')))
+           scene = list(xaxis = list(title = 'tSNE 1'),
+                        yaxis = list(title = 'tSNE 2'),
+                        zaxis = list(title = 'tSNE 3')))
 }
 
 data_opts <- unique(sample_map) %>% setNames(unique(sample_map)) %>% as.list
@@ -191,8 +191,9 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 
 ui <- shinyUI(fluidPage(
   
-  titlePanel("Plotting Tool for 1075 Samples from the exRNA Atlas"),
-  h4("James Diao, 24 March 2017"),
+  titlePanel("Dimensionality Reduction Plotting Tool for the exRNA Atlas"),
+  h4("James Diao, Version 1.0.0"),
+  h5(a("https://github.com/jamesdiao/ERCC-Plotting-Tool", href="https://github.com/jamesdiao/ERCC-Plotting-Tool", target="_blank")),
   fluidRow(
     column(4,
            h3("Control Panel"),
@@ -312,7 +313,10 @@ server <- shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$run_ggplot2 | input$run_plotly, {
-  if (input$embedding == "PCA" & (length(input$pcs_2d) < 2 | length(input$pcs_3d) < 3)) {
+    
+  if (input$embedding == "PCA" & (
+    (length(input$pcs_2d) < 2 & input$dim == '2D') | (length(input$pcs_3d) < 3 & input$dim == '3D')
+    )) {
     showshinyalert(session, id = "alert", HTMLtext = 'Please select more principal components', 
                    styleclass = 'danger')
   } else {
