@@ -1,6 +1,6 @@
 # Set working directory to file folder
-outdir <- getSrcDirectory(function(dummy) {dummy})
-setwd(outdir)
+#outdir <- getSrcDirectory(function(dummy) {dummy})
+#setwd(outdir)
 
 #rsconnect::deployApp('/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool/')
 #setwd("/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool")
@@ -91,9 +91,9 @@ hover_text <- sprintf('Biofluid: %s </br>Dataset: %s </br>Condition: %s </br>
                       abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
                       condition, anatomical, exRNA_src, cell_src, profiling, 
                       rna_kit, qc_std, gen_reads, tran_reads, gt_ratio)
-#hover_text <- sprintf('%s (%s)', 
-#                      abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
-#                      biofluid)
+hover_text <- sprintf('%s (%s)', 
+                      abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
+                      biofluid)
 
 plottable <- gsub("_"," ","Dataset" %>% 
                     c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
@@ -147,7 +147,7 @@ tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorb
     ggplot(aes(x = tSNE_1, y = tSNE_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
     ggtitle(sprintf("tSNE Plot of %s Colored by %s (%s Samples)", smRNA, gsub("_"," ",colorby), sum(keep))) + 
-    xlab(paste0("tSNE ",axis_x)) + ylab(paste0("tSNE ",axis_y)) + 
+    xlab("tSNE 1") + ylab("tSNE 2") + 
     theme(plot.title = element_text(size=22,face="bold"), 
           axis.title=element_text(size=16), 
           axis.text=element_text(size=11),
