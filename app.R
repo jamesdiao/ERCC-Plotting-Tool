@@ -105,7 +105,7 @@ pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object,
     ggplot(aes(x = PCA_1, y = PCA_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
     ggtitle(sprintf("PCA Plot of %s Colored by %s (%s Samples)", smRNA, gsub("_"," ",colorby), sum(keep))) + 
-    xlab(paste0("PCA_",axis_x)) + ylab(paste0("PCA_",axis_y)) + 
+    xlab(paste0("PCA ",axis_x)) + ylab(paste0("PCA ",axis_y)) + 
     theme(plot.title = element_text(size=22,face="bold"), 
           axis.title=element_text(size=16), 
           axis.text=element_text(size=11),
@@ -147,6 +147,7 @@ tsne_plot <- function(biofluid, color_elements, keep, tsne_object, smRNA, colorb
     ggplot(aes(x = tSNE_1, y = tSNE_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
     ggtitle(sprintf("tSNE Plot of %s Colored by %s (%s Samples)", smRNA, gsub("_"," ",colorby), sum(keep))) + 
+    xlab(paste0("tSNE ",axis_x)) + ylab(paste0("tSNE ",axis_y)) + 
     theme(plot.title = element_text(size=22,face="bold"), 
           axis.title=element_text(size=16), 
           axis.text=element_text(size=11),
@@ -165,8 +166,8 @@ tsne_plotly <- function(color_elements, keep, tsne_object, smRNA, colorby) {
     add_markers() %>%
     layout(title = sprintf("tSNE Plot of %s Colored by %s (%s Samples)", 
                            smRNA, gsub("_"," ",colorby), sum(keep)),
-           scene = list(xaxis = list(title = 'tSNE 1'),
-                        yaxis = list(title = 'tSNE 2')))
+           xaxis = list(title = 'tSNE 1'),
+           yaxis = list(title = 'tSNE 2'))
 }
 
 tsne_plotly_3d <- function(color_elements, keep, tsne_object, smRNA, colorby) {
@@ -178,9 +179,9 @@ tsne_plotly_3d <- function(color_elements, keep, tsne_object, smRNA, colorby) {
     add_markers() %>%
     layout(title = sprintf("tSNE Plot of %s Colored by %s (%s Samples)", 
                            smRNA, gsub("_"," ",colorby), sum(keep)),
-           scene = list(xaxis = list(title = 'tSNE 1'),
-                        yaxis = list(title = 'tSNE 2'),
-                        zaxis = list(title = 'tSNE 3')))
+           xaxis = list(title = 'tSNE 1'),
+           yaxis = list(title = 'tSNE 2'),
+           zaxis = list(title = 'tSNE 3'))
 }
 
 data_opts <- unique(sample_map) %>% setNames(unique(sample_map)) %>% as.list
@@ -192,7 +193,7 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 ui <- shinyUI(fluidPage(
   
   titlePanel("Dimensionality Reduction Plotting Tool for the exRNA Atlas"),
-  h4("James Diao, Version 1.0.0"),
+  h4("James Diao, Version 1.0.1"),
   h5(a("https://github.com/jamesdiao/ERCC-Plotting-Tool", href="https://github.com/jamesdiao/ERCC-Plotting-Tool", target="_blank")),
   fluidRow(
     column(4,
@@ -261,7 +262,7 @@ ui <- shinyUI(fluidPage(
                downloadButton(outputId = "plot_down", label = "Download Plot")
              )
            ),
-           shinyalert(id = 'alert', click.hide = TRUE, auto.close.after = 10),
+           shinyalert(id = 'alert', click.hide = TRUE, auto.close.after = 5),
            conditionalPanel(
              condition = "input.plotstyle == 'ggplot2'",
              plotOutput("plot_out")
@@ -313,7 +314,7 @@ server <- shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$run_ggplot2 | input$run_plotly, {
-    
+    hideshinyalert(session, id = "alert")
   if (input$embedding == "PCA" & (
     (length(input$pcs_2d) < 2 & input$dim == '2D') | (length(input$pcs_3d) < 3 & input$dim == '3D')
     )) {
