@@ -1,16 +1,5 @@
-# Set working directory to file folder
-#outdir <- getSrcDirectory(function(dummy) {dummy})
-#setwd(outdir)
-
 #rsconnect::deployApp('/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool/')
 #setwd("/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool")
-
-# Install and load all required packages
-#pkg_list <- c("ggplot2","dplyr","shiny","tsne")
-#installed <- pkg_list %in% installed.packages()[,"Package"]
-#if (!all(installed))
-#  install.packages(pkg_list[!installed])
-#sapply(pkg_list, require, character.only = T)
 
 require(plotly)
 require(shinysky)
@@ -67,7 +56,7 @@ import_tsv <- function(data_file) {
   }
   return(data_summary)
 }
-data_summary <- import_tsv(sprintf("%s/Data_Summary_1567.tsv", path)) %>% arrange(Biosample_Metadata_Accession)
+data_summary <- import_tsv(sprintf("%s/Metadata_Summary.tsv", path)) %>% arrange(Biosample_Metadata_Accession)
 #850, 1369, 1567
 
 biofluid <- data_summary[map,]$Biofluid_Name
@@ -91,9 +80,9 @@ hover_text <- sprintf('Biofluid: %s </br>Dataset: %s </br>Condition: %s </br>
                       abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
                       condition, anatomical, exRNA_src, cell_src, profiling, 
                       rna_kit, qc_std, gen_reads, tran_reads, gt_ratio)
-hover_text <- sprintf('%s (%s)', 
-                      abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
-                      biofluid)
+#hover_text <- sprintf('%s (%s)', 
+#                      abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
+#                      biofluid)
 
 plottable <- gsub("_"," ","Dataset" %>% 
                     c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
@@ -197,7 +186,7 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 ui <- shinyUI(fluidPage(
   
   titlePanel("Dimensionality Reduction Plotting Tool for the exRNA Atlas"),
-  h4("James Diao, Version 1.0.2"),
+  h4("James Diao, Version 1.0.3"),
   h5(a("https://github.com/jamesdiao/ERCC-Plotting-Tool", href="https://github.com/jamesdiao/ERCC-Plotting-Tool", target="_blank")),
   fluidRow(
     column(4,
