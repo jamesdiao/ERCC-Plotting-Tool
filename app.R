@@ -16,6 +16,7 @@ log_rna_reads <- readRDS(sprintf("%s/all_log_rna_reads.rds", path))
 all_reads_pca <- readRDS(sprintf("%s/all_log_PCA_reduced.rds", path))
 all_reads_tsne_2d <- readRDS(sprintf("%s/all_log_tSNE_reduced.rds", path))
 all_reads_tsne_3d <- readRDS(sprintf("%s/all_3D_log_tSNE_reduced.rds", path))
+all_reads_diffmap <- readRDS(sprintf("%s/all_log_diffmap_reduced.rds", path))
 sample_map <- readRDS(sprintf("%s/sample_map.rds", path))
 map <- readRDS(sprintf("%s/map.rds", path))
 
@@ -88,12 +89,13 @@ plottable <- gsub("_"," ","Dataset" %>%
                     c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
 
 ### PRINCIPAL COMPONENTS ANALYSIS
-pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object, smRNA, colorby, color_set) {
+reg_plot <- function(axis_x, axis_y, biofluid, color_elements, 
+                     keep, pca_object, smRNA, colorby, color_set, emb_type) {
   data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], 
              Shape = biofluid[keep], Color = color_elements[keep]) %>% 
     ggplot(aes(x = PCA_1, y = PCA_2, shape = Shape, color = Color)) + 
     geom_point(size = 2.5) + 
-    ggtitle(sprintf("PCA Plot of %s Colored by %s (%s Samples)", smRNA, gsub("_"," ",colorby), sum(keep))) + 
+    ggtitle(sprintf("%s Plot of %s Colored by %s (%s Samples)", emb_type, smRNA, gsub("_"," ",colorby), sum(keep))) + 
     xlab(paste0("PC ",axis_x)) + ylab(paste0("PC ",axis_y)) + 
     theme(plot.title = element_text(size=22,face="bold"), 
           axis.title=element_text(size=16), 
@@ -104,27 +106,29 @@ pca_plot <- function(axis_x, axis_y, biofluid, color_elements, keep, pca_object,
     scale_color_manual(values = color_set)
 }
 
-pca_plotly <- function(axis_x, axis_y, color_elements, keep, pca_object, smRNA, colorby) {
+reg_plotly <- function(axis_x, axis_y, color_elements, keep, 
+                       pca_object, smRNA, colorby, emb_type) {
   data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], Color = color_elements[keep]) %>% 
   plot_ly(x = ~PCA_1, y = ~PCA_2, color = ~Color, 
                hoverinfo = 'text', text = hover_text[keep],
                marker = list(size = 6, symbol = 'square')) %>%
     add_markers() %>%
-    layout(title = sprintf("PCA Plot of %s Colored by %s (%s Samples)", 
-                           smRNA, gsub("_"," ",colorby), sum(keep)),
+    layout(title = sprintf("%s Plot of %s Colored by %s (%s Samples)", 
+                           emb_type, smRNA, gsub("_"," ",colorby), sum(keep)),
            xaxis = list(title = sprintf('PC %s', axis_x)),
            yaxis = list(title = sprintf('PC %s', axis_y)))
 }
 
-pca_plotly_3d <- function(axis_x, axis_y, axis_z, color_elements, keep, pca_object, smRNA, colorby) {
+reg_plotly_3d <- function(axis_x, axis_y, axis_z, color_elements, keep, 
+                          pca_object, smRNA, colorby, emb_type) {
   data.frame(PCA_1 = pca_object[keep,axis_x], PCA_2 = pca_object[keep,axis_y], PCA_3 = pca_object[keep, axis_z], 
              Color = color_elements[keep]) %>%
   plot_ly(x = ~PCA_1, y = ~PCA_2, z = ~PCA_3, color = ~Color, 
           hoverinfo = 'text', text = hover_text[keep],
           marker = list(size = 5, symbol = 'square')) %>%
     add_markers() %>%
-    layout(title = sprintf("PCA Plot of %s Colored by %s (%s Samples)", 
-                           smRNA, gsub("_"," ",colorby), sum(keep)),
+    layout(title = sprintf("%s Plot of %s Colored by %s (%s Samples)", 
+                           emb_type, smRNA, gsub("_"," ",colorby), sum(keep)),
            scene = list(
              xaxis = list(title = sprintf('PC %s', axis_x)),
              yaxis = list(title = sprintf('PC %s', axis_y)),
@@ -185,8 +189,7 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 
 ui <- shinyUI(fluidPage(
   
-  titlePanel("Dimensionality Reduction Plotting Tool for the exRNA Atlas"),
-  h4("James Diao, Version 1.0.3"),
+  titlePanel("Dimensionality Reduction Plotting Tool for the exRNA Atlas (version 1.0.3)"),
   h5(a("https://github.com/jamesdiao/ERCC-Plotting-Tool", href="https://github.com/jamesdiao/ERCC-Plotting-Tool", target="_blank")),
   fluidRow(
     column(4,
@@ -202,16 +205,16 @@ ui <- shinyUI(fluidPage(
              radioButtons(inputId = "embedding", label = "Embedding", 
                           inline = T, choices = c("PCA", "tSNE"), selected = "PCA"),
              conditionalPanel(
-               condition = "input.embedding == 'PCA' & input.dim == '2D'",
-               checkboxGroupInput(inputId = "pcs_2d", label = "Principal Components", 
+               condition = "input.embedding != 'tSNE' & input.dim == '2D'",
+               checkboxGroupInput(inputId = "pcs_2d", label = "Axes", 
                             inline = T, choices = sprintf("PC%s",1:5), selected = sprintf("PC%s",1:2))
                #selectizeInput(inputId = "pcs_2d", label = "Principal Components", 
               #                choices = sprintf("PC%s",1:10), selected = sprintf("PC%s",1:2), multiple = TRUE,
               #                options = list(maxItems = 2))
              ), 
              conditionalPanel(
-               condition = "input.embedding == 'PCA' & input.dim == '3D'",
-               checkboxGroupInput(inputId = "pcs_3d", label = "Principal Components", 
+               condition = "input.embedding != 'tSNE' & input.dim == '3D'",
+               checkboxGroupInput(inputId = "pcs_3d", label = "Axes", 
                            inline = T, choices = sprintf("PC%s",1:5), selected = sprintf("PC%s",1:3))
                #selectizeInput(inputId = "pcs_3d", label = "Principal Components", 
               #                choices = sprintf("PC%s",1:10), selected = sprintf("PC%s",1:3), multiple = TRUE,
@@ -265,7 +268,8 @@ ui <- shinyUI(fluidPage(
              plotlyOutput("plotly_out")
            )
     )
-  )
+  ),
+  h5("James Diao | Gerstein Lab | Yale University")
 ))
 
 
@@ -273,6 +277,7 @@ server <- shinyServer(function(input, output, session) {
   
   coord <- reactiveValues()
   coord$pca <- all_reads_pca
+  coord$spectral <- all_reads_diffmap
   coord$tsne_2d <- all_reads_tsne_2d
   coord$tsne_3d <- all_reads_tsne_3d
   coord$keep <- rep(TRUE,length(sample_map))
@@ -355,22 +360,28 @@ server <- shinyServer(function(input, output, session) {
     if ( ("YES" %in% toupper(color_names)) & ("NO" %in% toupper(color_names)) )
       names(color_set) <- rev(color_names)
     
-    if (input$embedding == "PCA") {
+    if (input$embedding == "PCA" | input$embedding == "Spectral") {
       reads_pca <- coord$pca[[input$smRNA]]
+      reads_spectral <- coord$spectral[[input$smRNA]]
+      if (input$embedding == "PCA") embedding <- reads_pca
+      if (input$embedding == "Spectral") embedding <- reads_spectral
+      
       pcs <- gsub("[^0-9]", "", unlist(input$pcs_2d) ) %>% as.numeric
       if (input$plotstyle == "plotly") {
         if (input$dim == "2D") {
-          plotly_out <- pca_plotly(pcs[1], pcs[2], color_elements, coord$keep, reads_pca, input$smRNA, colorby)
+          plotly_out <- reg_plotly(pcs[1], pcs[2], color_elements, coord$keep, 
+                                   embedding, input$smRNA, colorby, input$embedding)
         }
         if (input$dim == "3D") {
           pcs <- gsub("[^0-9]", "", unlist(input$pcs_3d) ) %>% as.numeric
-          plotly_out <- pca_plotly_3d(pcs[1], pcs[2], pcs[3], color_elements, coord$keep, reads_pca, input$smRNA, colorby)
+          plotly_out <- reg_plotly_3d(pcs[1], pcs[2], pcs[3], color_elements, coord$keep, 
+                                      embedding, input$smRNA, colorby, input$embedding)
         }
         output$plotly_out <- renderPlotly({ plotly_out })
       }
       if (input$plotstyle == "ggplot2") {
-        plot_out <- pca_plot(pcs[1], pcs[2] + (pcs[1] == pcs[2]), biofluid, color_elements, 
-                             coord$keep, reads_pca, input$smRNA, colorby, color_set)
+        plot_out <- reg_plot(pcs[1], pcs[2] + (pcs[1] == pcs[2]), biofluid, color_elements, 
+                             coord$keep, embedding, input$smRNA, colorby, color_set, input$embedding)
         output$plot_out <- renderPlot({ plot_out })
         
       }
@@ -438,10 +449,4 @@ shinyApp(ui = ui, server = server)
 #  })
 
 #})
-
-
-
-
-
-
 

@@ -1,2 +1,3 @@
 load("/Users/jamesdiao/Box Sync/Gerstein/ERCC-Plotting-Tool/Dependencies/sample_map.rds")
-load("/Users/jamesdiao/Box Sync/Gerstein/ERCC-Plotting-Tool/Dependencies/sample_map.rds")
+load("/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool/Dependencies/all_log_diffmap_reduced.rds")
+load("/Users/jamesdiao/Documents/Gerstein/ERCC-Plotting-Tool/Dependencies/all_log_diffmap_reduced.rds")
