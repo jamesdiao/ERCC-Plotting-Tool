@@ -81,9 +81,9 @@ hover_text <- sprintf('Biofluid: %s </br>Dataset: %s </br>Condition: %s </br>
                       abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
                       condition, anatomical, exRNA_src, cell_src, profiling, 
                       rna_kit, qc_std, gen_reads, tran_reads, gt_ratio)
-#hover_text <- sprintf('%s (%s)', 
-#                      abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
-#                      biofluid)
+hover_text <- sprintf('%s (%s)', 
+                      abbreviate(sample_map,minlength = 20, method = 'both.sides'), 
+                      biofluid)
 
 plottable <- gsub("_"," ","Dataset" %>% 
                     c(colnames(data_summary[map,])[apply(data_summary[map,], 2, function(col) length(unique(col))) %>% between(2,20)]))
@@ -189,8 +189,7 @@ biofluid_opts <- levels(data_summary$Biofluid_Name)
 
 ui <- shinyUI(fluidPage(
   
-  titlePanel("Dimensionality Reduction Plotting Tool for the exRNA Atlas (version 1.0.3)"),
-  h5(a("https://github.com/jamesdiao/ERCC-Plotting-Tool", href="https://github.com/jamesdiao/ERCC-Plotting-Tool", target="_blank")),
+  titlePanel("Dimensionality Reduction Plotting Tool for the exRNA Atlas (Version 1.0.3)"),
   fluidRow(
     column(4,
            h3("Control Panel"),
@@ -269,7 +268,8 @@ ui <- shinyUI(fluidPage(
            )
     )
   ),
-  h5("James Diao | Gerstein Lab | Yale University")
+  h5("James Diao | Gerstein Lab | Yale University"),
+  h5(a("https://github.com/jamesdiao/ERCC-Plotting-Tool", href="https://github.com/jamesdiao/ERCC-Plotting-Tool", target="_blank"))
 ))
 
 
