@@ -1,4 +1,4 @@
-# Plotting Tool for 1075 Samples from the exRNA Atlas
+# Dimensionality Reduction Plotting Tool for the exRNA Atlas
 
 #### James Diao, 21 March 2017
 
@@ -8,8 +8,7 @@ Here are some brief notes on the usage of this visualization tool. <br />
 
 ### ONLINE APPLICATION
 
-The plotting is hosted by shinyapps.io at: https://jamesdiao.shinyapps.io/ercc-plotting-tool/  
-The application is capped at 25 active user-hours per month. It is identical to the application in this repository. 
+The tool is primarily hosted at: http://exrna-atlas.org/exat/precomputedJobs. It is also available via shinyapps.io at: https://jamesdiao.shinyapps.io/ercc-plotting-tool/.
 
 -------------------------------------------------------------
 
@@ -76,7 +75,7 @@ Clone this source repository, containing our scripts and data: <br />
 
 ### CONTACT  
 
-Please contact James Diao (james.diao@yale.edu) with any questions. 
+Please contact James Diao (james.diao@yale.edu) with any questions.
 
 <br />
 <br />
