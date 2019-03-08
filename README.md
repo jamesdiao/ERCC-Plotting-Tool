@@ -8,7 +8,7 @@ Here are some brief notes on the usage of this visualization tool. <br />
 
 ### ONLINE APPLICATION
 
-The tool is primarily hosted at: https://exrna-atlas.org/exat/publicAnalyses. It is also available via shinyapps.io at: https://jamesdiao.shinyapps.io/ercc-plotting-tool/.
+The tool is primarily hosted at: https://exrna-atlas.org/exat/publicAnalyses. 
 
 -------------------------------------------------------------
 
